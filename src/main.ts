@@ -38,6 +38,6 @@ async function bootstrap() {
   // const yaml = require('js-yaml').dump(yamlDocument);
   // writeFileSync('./swagger-spec.yaml', yaml);
   
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();
