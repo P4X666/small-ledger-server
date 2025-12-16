@@ -15,7 +15,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   // 验证JWT令牌，返回用户信息
-  async validate(payload: any): Promise<User> {
+  async validate(payload: { sub: number; username: string }): Promise<User> {
     return this.usersService.findOne(payload.sub);
   }
 }

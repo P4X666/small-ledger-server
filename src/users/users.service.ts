@@ -19,12 +19,12 @@ export class UsersService {
   async register(registerUserDto: RegisterUserDto): Promise<User> {
     // 密码加密
     const hashedPassword = await bcrypt.hash(registerUserDto.password, 10);
-    
+
     const user = this.usersRepository.create({
       ...registerUserDto,
       password: hashedPassword,
     });
-    
+
     return this.usersRepository.save(user);
   }
 
@@ -32,22 +32,25 @@ export class UsersService {
   async login(loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
     // 查找用户
     const user = await this.findByUsername(loginUserDto.username);
-    
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    
+
     // 验证密码
-    const isPasswordValid = await bcrypt.compare(loginUserDto.password, user.password);
-    
+    const isPasswordValid = await bcrypt.compare(
+      loginUserDto.password,
+      user.password,
+    );
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    
+
     // 生成JWT令牌
     const payload = { username: user.username, sub: user.id };
     const access_token = this.jwtService.sign(payload);
-    
+
     return { access_token };
   }
 
@@ -60,11 +63,11 @@ export class UsersService {
   // 验证用户（用于JWT认证）
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.findByUsername(username);
-    
-    if (user && await bcrypt.compare(password, user.password)) {
+
+    if (user && (await bcrypt.compare(password, user.password))) {
       return user;
     }
-    
+
     return null;
   }
 
@@ -85,12 +88,12 @@ export class UsersService {
   // 更新用户
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
-    
+
     // 如果更新密码，需要重新加密
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
-    
+
     const updatedUser = { ...user, ...updateUserDto };
     return this.usersRepository.save(updatedUser);
   }

@@ -27,7 +27,7 @@ export class AuthService {
   }
 
   // 生成JWT令牌
-  async generateToken(user: User): Promise<{ access_token: string }> {
+  generateToken(user: User): { access_token: string } {
     const payload = { username: user.username, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload),

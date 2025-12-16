@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsEnum, IsNumber, IsDateString, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsDateString,
+  Min,
+} from 'class-validator';
 
 // 创建交易DTO
 export class CreateTransactionDto {

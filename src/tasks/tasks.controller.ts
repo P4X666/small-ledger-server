@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto, UpdateTaskDto, UpdateTaskStatusDto } from './tasks.dto';
 import { Task } from './tasks.entity';
@@ -12,7 +21,10 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
-  async create(@Body() createTaskDto: CreateTaskDto, @GetCurrentUser() user: User): Promise<Task> {
+  async create(
+    @Body() createTaskDto: CreateTaskDto,
+    @GetCurrentUser() user: User,
+  ): Promise<Task> {
     return this.tasksService.create(user.id, createTaskDto);
   }
 
@@ -22,27 +34,44 @@ export class TasksController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @GetCurrentUser() user: User): Promise<Task> {
+  async findOne(
+    @Param('id') id: string,
+    @GetCurrentUser() user: User,
+  ): Promise<Task> {
     return this.tasksService.findOne(+id, user.id);
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto, @GetCurrentUser() user: User): Promise<Task> {
+  async update(
+    @Param('id') id: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+    @GetCurrentUser() user: User,
+  ): Promise<Task> {
     return this.tasksService.update(+id, user.id, updateTaskDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @GetCurrentUser() user: User): Promise<void> {
+  async remove(
+    @Param('id') id: string,
+    @GetCurrentUser() user: User,
+  ): Promise<void> {
     return this.tasksService.remove(+id, user.id);
   }
 
   @Put(':id/status')
-  async updateStatus(@Param('id') id: string, @Body() updateTaskStatusDto: UpdateTaskStatusDto, @GetCurrentUser() user: User): Promise<Task> {
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() updateTaskStatusDto: UpdateTaskStatusDto,
+    @GetCurrentUser() user: User,
+  ): Promise<Task> {
     return this.tasksService.updateStatus(+id, user.id, updateTaskStatusDto);
   }
 
   @Get('by-time/:period')
-  async findByTimePeriod(@Param('period') period: 'week' | 'month' | 'year', @GetCurrentUser() user: User): Promise<Task[]> {
+  async findByTimePeriod(
+    @Param('period') period: 'week' | 'month' | 'year',
+    @GetCurrentUser() user: User,
+  ): Promise<Task[]> {
     return this.tasksService.findByTimePeriod(user.id, period);
   }
 

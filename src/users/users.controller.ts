@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Put, Delete, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { RegisterUserDto, LoginUserDto, UpdateUserDto } from './users.dto';
 import { User } from './users.entity';
@@ -15,7 +23,9 @@ export class UsersController {
 
   // 用户登录
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+  ): Promise<{ access_token: string }> {
     return this.usersService.login(loginUserDto);
   }
 
@@ -30,7 +40,10 @@ export class UsersController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<User> {
     return this.usersService.update(+id, updateUserDto);
   }
 

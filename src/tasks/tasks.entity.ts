@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../users/users.entity';
 
 @Entity()
@@ -19,7 +27,11 @@ export class Task {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ type: 'enum', enum: ['pending', 'in_progress', 'completed'], default: 'pending' })
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'in_progress', 'completed'],
+    default: 'pending',
+  })
   status: 'pending' | 'in_progress' | 'completed';
 
   @Column({ type: 'enum', enum: ['high', 'medium', 'low'], default: 'medium' })

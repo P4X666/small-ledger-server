@@ -146,6 +146,8 @@ src/
 │   └── savings-goals.dto.ts     # 攒钱目标数据传输对象
 └── utils/
     └── logger.ts                # 日志配置
+test/
+├── 测试
 ```
 
 ## 安装和运行
@@ -184,9 +186,9 @@ NODE_ENV=development
 DB_TYPE=mysql
 DB_HOST=localhost
 DB_PORT=3306
-DB_USERNAME=root
+DB_USERNAME=admin
 DB_PASSWORD=123456
-DB_DATABASE=small-ledger
+DB_DATABASE=small_ledger
 DB_SYNC=true
 
 # JWT配置
@@ -254,8 +256,8 @@ pnpm run test:e2e
 
 ### 测试环境数据库配置
 - 数据库类型：MySQL
-- 数据库名称：small-ledger
-- 数据库用户名：root
+- 数据库名称：small_ledger
+- 数据库用户名：admin
 - 数据库密码：123456
 - 数据库主机：localhost
 - 数据库端口：3306

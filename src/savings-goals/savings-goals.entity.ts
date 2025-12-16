@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../users/users.entity';
 
 @Entity()
@@ -22,7 +30,10 @@ export class SavingsGoal {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   current_amount: number;
 
-  @Column({ type: 'enum', enum: ['monthly', 'quarterly', 'half_yearly', 'yearly'] })
+  @Column({
+    type: 'enum',
+    enum: ['monthly', 'quarterly', 'half_yearly', 'yearly'],
+  })
   period: 'monthly' | 'quarterly' | 'half_yearly' | 'yearly';
 
   @Column()
@@ -31,8 +42,15 @@ export class SavingsGoal {
   @Column()
   end_date: Date;
 
-  @Column({ type: 'enum', enum: ['in_progress', 'completed', 'failed'], default: 'in_progress' })
+  @Column({
+    type: 'enum',
+    enum: ['in_progress', 'completed', 'failed'],
+    default: 'in_progress',
+  })
   status: 'in_progress' | 'completed' | 'failed';
+
+  @Column({ nullable: true })
+  description?: string;
 
   @CreateDateColumn()
   created_at: Date;

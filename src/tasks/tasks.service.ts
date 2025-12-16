@@ -33,7 +33,11 @@ export class TasksService {
   }
 
   // 更新任务
-  async update(id: number, user_id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
+  async update(
+    id: number,
+    user_id: number,
+    updateTaskDto: UpdateTaskDto,
+  ): Promise<Task> {
     const task = await this.findOne(id, user_id);
     const updatedTask = { ...task, ...updateTaskDto };
     return this.tasksRepository.save(updatedTask);
@@ -48,15 +52,24 @@ export class TasksService {
   }
 
   // 更新任务状态
-  async updateStatus(id: number, user_id: number, updateTaskStatusDto: UpdateTaskStatusDto): Promise<Task> {
+  async updateStatus(
+    id: number,
+    user_id: number,
+    updateTaskStatusDto: UpdateTaskStatusDto,
+  ): Promise<Task> {
     const task = await this.findOne(id, user_id);
     task.status = updateTaskStatusDto.status;
     return this.tasksRepository.save(task);
   }
 
   // 按时间周期获取任务
-  async findByTimePeriod(user_id: number, period: 'week' | 'month' | 'year'): Promise<Task[]> {
-    return this.tasksRepository.find({ where: { user_id, time_period: period } });
+  async findByTimePeriod(
+    user_id: number,
+    period: 'week' | 'month' | 'year',
+  ): Promise<Task[]> {
+    return this.tasksRepository.find({
+      where: { user_id, time_period: period },
+    });
   }
 
   // 按四象限获取任务

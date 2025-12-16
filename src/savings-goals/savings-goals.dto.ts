@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsEnum, IsNumber, IsDateString, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsDateString,
+  Min,
+} from 'class-validator';
 
 // 创建攒钱目标DTO
 export class CreateSavingsGoalDto {
@@ -22,6 +29,14 @@ export class CreateSavingsGoalDto {
 
   @IsDateString()
   end_date: Date;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(['in_progress', 'completed', 'failed'])
+  status?: 'in_progress' | 'completed' | 'failed';
 }
 
 // 更新攒钱目标DTO
@@ -55,6 +70,10 @@ export class UpdateSavingsGoalDto {
   @IsOptional()
   @IsEnum(['in_progress', 'completed', 'failed'])
   status?: 'in_progress' | 'completed' | 'failed';
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
 
 // 更新攒钱目标金额DTO

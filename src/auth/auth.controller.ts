@@ -15,7 +15,9 @@ export class AuthController {
 
   // 用户登录
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+  ): Promise<{ access_token: string }> {
     return this.authService.login(loginUserDto);
   }
 }
