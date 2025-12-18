@@ -3,23 +3,36 @@ import { AuthService } from '../../src/auth/auth.service';
 import { UsersService } from '../../src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterUserDto, LoginUserDto } from '../../src/users/users.dto';
+import { UnauthorizedException } from '@nestjs/common';
 
-// Mock UsersService and JwtService
-jest.mock('../../src/users/users.service', () => ({
-  UsersService: jest.fn().mockImplementation(() => ({
-    register: jest.fn().mockResolvedValue({
-      id: 1,
-      username: 'testuser',
-      password: 'hashed_password',
-    }),
-    login: jest.fn().mockResolvedValue({ access_token: 'jwt_token' }),
-    validateUser: jest.fn().mockResolvedValue({
-      id: 1,
-      username: 'testuser',
-      password: 'hashed_password',
-    }),
-  })),
-}));
+// Mock UsersService methods
+jest.mock('../../src/users/users.service', () => {
+  const mockFindByUsername = jest.fn();
+  const mockRegister = jest.fn().mockResolvedValue({
+    id: 1,
+    username: 'testuser',
+    password: 'hashed_password',
+  });
+  const mockLogin = jest.fn();
+  const mockValidateUser = jest.fn();
+  const mockFindOne = jest.fn();
+  const mockSave = jest.fn();
+  const mockDelete = jest.fn();
+  const mockFindAll = jest.fn();
+  
+  return {
+    UsersService: jest.fn().mockImplementation(() => ({
+      register: mockRegister,
+      login: mockLogin,
+      validateUser: mockValidateUser,
+      findByUsername: mockFindByUsername,
+      findOne: mockFindOne,
+      save: mockSave,
+      delete: mockDelete,
+      findAll: mockFindAll,
+    })),
+  };
+});
 
 jest.mock('@nestjs/jwt', () => ({
   JwtService: jest.fn().mockImplementation(() => ({
@@ -71,7 +84,29 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('should call usersService.login with the provided dto', async () => {
+    it('should throw UnauthorizedException when username or password is empty', async () => {
+      // Set up mock to throw error when username or password is empty
+      usersService.login.mockImplementation((loginDto: LoginUserDto) => {
+        if (!loginDto.username || !loginDto.password) {
+          throw new UnauthorizedException('Invalid credentials');
+        }
+        return Promise.resolve({ access_token: 'jwt_token' });
+      });
+      
+      // Test with empty username
+      await expect(authService.login({ username: '', password: 'password123' } as LoginUserDto)).rejects.toThrow(UnauthorizedException);
+      
+      // Test with empty password
+      await expect(authService.login({ username: 'testuser', password: '' } as LoginUserDto)).rejects.toThrow(UnauthorizedException);
+      
+      // Test with both empty
+      await expect(authService.login({ username: '', password: '' } as LoginUserDto)).rejects.toThrow(UnauthorizedException);
+      
+      // Test with undefined values
+      await expect(authService.login({} as LoginUserDto)).rejects.toThrow(UnauthorizedException);
+    });
+    
+    it('should call usersService.login with the provided dto when params are valid', async () => {
       const loginDto: LoginUserDto = {
         username: 'testuser',
         password: 'password123',
@@ -79,6 +114,7 @@ describe('AuthService', () => {
 
       const mockToken = { access_token: 'jwt_token' };
 
+      // Set up mock to return token when params are valid
       usersService.login.mockResolvedValue(mockToken);
 
       const result = await authService.login(loginDto);

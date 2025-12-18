@@ -5,6 +5,8 @@ import { writeFileSync } from 'fs';
 import { AppModule } from './app.module';
 import { loggerMiddleware } from './middleware/logger.middleware';
 import logger from './utils/logger';
+import { ResponseInterceptor } from './utils/response.interceptor';
+import { HttpExceptionFilter } from './utils/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,8 +22,15 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       transform: true,
+      disableErrorMessages: false,
     }),
   );
+
+  // 使用全局响应拦截器
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  // 使用全局异常过滤器
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // 配置Swagger文档
   const config = new DocumentBuilder()
@@ -34,7 +43,7 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
 
   // 生成并保存Swagger JSON文档
-  writeFileSync('./swagger-spec.json', JSON.stringify(document));
+  // writeFileSync('./swagger-spec.json', JSON.stringify(document));
 
   // 生成并保存Swagger YAML文档
   // const yamlDocument = SwaggerModule.createDocument(app, config);

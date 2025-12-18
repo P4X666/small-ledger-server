@@ -30,6 +30,11 @@ export class UsersService {
 
   // 用户登录
   async login(loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
+    // 参数验证
+    if (!loginUserDto.username || !loginUserDto.password) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
     // 查找用户
     const user = await this.findByUsername(loginUserDto.username);
 
