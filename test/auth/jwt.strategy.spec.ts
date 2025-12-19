@@ -12,14 +12,11 @@ describe('JwtStrategy', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        JwtStrategy,
-        UsersService,
-      ],
+      providers: [JwtStrategy, UsersService],
     }).compile();
 
     jwtStrategy = module.get<JwtStrategy>(JwtStrategy);
-    usersService = module.get(UsersService) as jest.Mocked<UsersService>;
+    usersService = module.get(UsersService);
   });
 
   afterEach(() => {
@@ -47,9 +44,13 @@ describe('JwtStrategy', () => {
     it('should throw NotFoundException when user not found', async () => {
       const payload = { sub: 999, username: 'nonexistentuser' };
 
-      usersService.findOne.mockRejectedValue(new NotFoundException('User not found'));
+      usersService.findOne.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
 
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow(NotFoundException);
+      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(usersService.findOne).toHaveBeenCalledWith(payload.sub);
     });
   });

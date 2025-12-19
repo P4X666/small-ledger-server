@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { RegisterUserDto, LoginUserDto } from '../users/users.dto';
@@ -17,8 +17,22 @@ export class AuthService {
   }
 
   // 用户登录
-  async login(loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
-    return this.usersService.login(loginUserDto);
+  async login(
+    loginUserDto: LoginUserDto,
+  ): Promise<{ access_token: string; user: User }> {
+    const { access_token } = await this.usersService.login(loginUserDto);
+    const user = await this.usersService.findByUsername(loginUserDto.username);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    return {
+      access_token,
+      user: {
+        id: user.id,
+        username: user.username,
+        created_at: user.created_at,
+      } as User,
+    };
   }
 
   // 验证用户

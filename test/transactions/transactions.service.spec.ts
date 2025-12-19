@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionsService } from '../../src/transactions/transactions.service';
 import { Transaction } from '../../src/transactions/transactions.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { CreateTransactionDto, UpdateTransactionDto } from '../../src/transactions/transactions.dto';
+import {
+  CreateTransactionDto,
+  UpdateTransactionDto,
+} from '../../src/transactions/transactions.dto';
 import { NotFoundException } from '@nestjs/common';
 
 // Mock factory

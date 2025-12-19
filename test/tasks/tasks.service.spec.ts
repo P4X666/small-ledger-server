@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TasksService } from '../../src/tasks/tasks.service';
 import { Task } from '../../src/tasks/tasks.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { CreateTaskDto, UpdateTaskDto, UpdateTaskStatusDto } from '../../src/tasks/tasks.dto';
+import {
+  CreateTaskDto,
+  UpdateTaskDto,
+  UpdateTaskStatusDto,
+} from '../../src/tasks/tasks.dto';
 import { NotFoundException } from '@nestjs/common';
 
 // Mock factory

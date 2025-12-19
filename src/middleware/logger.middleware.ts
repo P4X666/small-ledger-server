@@ -12,6 +12,15 @@ export function loggerMiddleware(
   // 获取请求信息
   const { method, originalUrl, headers, body, query, params } = req;
 
+  // 过滤敏感信息
+  const sanitizeBody = (body: any) => {
+    if (!body) return body;
+    const sanitized = { ...body };
+    // 排除敏感字段
+    if (sanitized.password) sanitized.password = '***';
+    return sanitized;
+  };
+
   // 记录请求日志
   logger.info({
     timestamp: new Date().toISOString(),
@@ -25,7 +34,7 @@ export function loggerMiddleware(
         'content-type': headers['content-type'],
         authorization: headers.authorization ? '***' : undefined,
       },
-      body,
+      body: sanitizeBody(body),
       query,
       params,
       ip: req.ip,

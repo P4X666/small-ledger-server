@@ -12,6 +12,7 @@ jest.mock('../../src/users/users.service', () => {
     id: 1,
     username: 'testuser',
     password: 'hashed_password',
+    created_at: new Date(),
   });
   const mockLogin = jest.fn();
   const mockValidateUser = jest.fn();
@@ -19,7 +20,7 @@ jest.mock('../../src/users/users.service', () => {
   const mockSave = jest.fn();
   const mockDelete = jest.fn();
   const mockFindAll = jest.fn();
-  
+
   return {
     UsersService: jest.fn().mockImplementation(() => ({
       register: mockRegister,
@@ -72,6 +73,7 @@ describe('AuthService', () => {
         id: 1,
         username: 'testuser',
         password: 'hashed_password',
+        created_at: new Date(),
       };
 
       usersService.register.mockResolvedValue(mockUser as any);
@@ -92,35 +94,69 @@ describe('AuthService', () => {
         }
         return Promise.resolve({ access_token: 'jwt_token' });
       });
-      
+
       // Test with empty username
-      await expect(authService.login({ username: '', password: 'password123' } as LoginUserDto)).rejects.toThrow(UnauthorizedException);
-      
+      await expect(
+        authService.login({
+          username: '',
+          password: 'password123',
+        } as LoginUserDto),
+      ).rejects.toThrow(UnauthorizedException);
+
       // Test with empty password
-      await expect(authService.login({ username: 'testuser', password: '' } as LoginUserDto)).rejects.toThrow(UnauthorizedException);
-      
-      // Test with both empty
-      await expect(authService.login({ username: '', password: '' } as LoginUserDto)).rejects.toThrow(UnauthorizedException);
-      
+      await expect(
+        authService.login({
+          username: 'testuser',
+          password: '',
+        } as LoginUserDto),
+      ).rejects.toThrow(UnauthorizedException);
+
+      // Test with all empty
+      await expect(
+        authService.login({
+          username: '',
+          password: '',
+        } as LoginUserDto),
+      ).rejects.toThrow(UnauthorizedException);
+
       // Test with undefined values
-      await expect(authService.login({} as LoginUserDto)).rejects.toThrow(UnauthorizedException);
+      await expect(authService.login({} as LoginUserDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
-    
-    it('should call usersService.login with the provided dto when params are valid', async () => {
+
+    it('should return access_token and user info when login is successful', async () => {
       const loginDto: LoginUserDto = {
         username: 'testuser',
         password: 'password123',
       };
 
-      const mockToken = { access_token: 'jwt_token' };
+      const mockLoginResult = { access_token: 'jwt_token' };
+      const mockUser = {
+        id: 1,
+        username: 'testuser',
+        password: 'hashed_password',
+        created_at: new Date(),
+      };
 
-      // Set up mock to return token when params are valid
-      usersService.login.mockResolvedValue(mockToken);
+      // Set up mocks
+      usersService.login.mockResolvedValue(mockLoginResult);
+      usersService.findByUsername.mockResolvedValue(mockUser as any);
 
       const result = await authService.login(loginDto);
 
       expect(usersService.login).toHaveBeenCalledWith(loginDto);
-      expect(result).toEqual(mockToken);
+      expect(usersService.findByUsername).toHaveBeenCalledWith(
+        loginDto.username,
+      );
+      expect(result).toEqual({
+        access_token: 'jwt_token',
+        user: {
+          id: mockUser.id,
+          username: mockUser.username,
+          created_at: mockUser.created_at,
+        },
+      });
     });
   });
 

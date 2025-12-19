@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -15,6 +16,16 @@ import { AuthModule } from './auth/auth.module';
       envFilePath: `.env.${process.env.NODE_ENV}`,
       isGlobal: true,
     }),
+    // 配置请求频率限制，防止暴力破解
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          name: 'auth',
+          ttl: 60000, // 1分钟
+          limit: 10, // 最多10个请求
+        },
+      ],
+    }),
     TypeOrmModule.forRoot({
       type: process.env.DB_TYPE as 'mysql',
       host: process.env.DB_HOST,
@@ -25,7 +36,7 @@ import { AuthModule } from './auth/auth.module';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: process.env.DB_SYNC === 'true',
       charset: 'utf8mb4',
-      timezone: 'Asia/Shanghai',
+      timezone: '+08:00',
       logging: ['query', 'error'],
     }),
     UsersModule,

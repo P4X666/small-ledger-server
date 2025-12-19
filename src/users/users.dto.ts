@@ -1,15 +1,23 @@
-import { IsString, IsOptional, IsNotEmpty, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  MinLength,
+  MaxLength,
+  IsOptional,
+} from 'class-validator';
 
 // 注册用户DTO
 export class RegisterUserDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(3)
+  @MaxLength(50)
   username: string;
 
   @IsNotEmpty()
   @IsString()
   @MinLength(6)
+  @MaxLength(255)
   password: string;
 }
 
@@ -17,10 +25,14 @@ export class RegisterUserDto {
 export class LoginUserDto {
   @IsNotEmpty()
   @IsString()
+  @MinLength(3)
+  @MaxLength(50)
   username: string;
 
   @IsNotEmpty()
   @IsString()
+  @MinLength(6)
+  @MaxLength(255)
   password: string;
 }
 
@@ -29,10 +41,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   @MinLength(3)
+  @MaxLength(50)
   username?: string;
 
   @IsOptional()
   @IsString()
   @MinLength(6)
+  @MaxLength(255)
   password?: string;
 }

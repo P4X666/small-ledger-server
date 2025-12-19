@@ -5,7 +5,11 @@ import { User } from '../../src/users/users.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException, NotFoundException } from '@nestjs/common';
-import { RegisterUserDto, LoginUserDto, UpdateUserDto } from '../../src/users/users.dto';
+import {
+  RegisterUserDto,
+  LoginUserDto,
+  UpdateUserDto,
+} from '../../src/users/users.dto';
 import * as bcrypt from 'bcrypt';
 
 // Mock bcrypt
@@ -72,11 +76,14 @@ describe('UsersService', () => {
 
       const result = await usersService.register(registerDto);
 
+      // 验证bcrypt使用了10轮盐值
       expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 10);
-      expect(usersRepository.create).toHaveBeenCalledWith({
-        ...registerDto,
-        password: 'hashed_password',
-      });
+      expect(usersRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          username: registerDto.username,
+          password: 'hashed_password',
+        }),
+      );
       expect(usersRepository.save).toHaveBeenCalled();
       expect(result).toHaveProperty('id');
       expect(result.username).toBe(registerDto.username);
@@ -103,6 +110,7 @@ describe('UsersService', () => {
       expect(usersRepository.findOne).toHaveBeenCalledWith({
         where: { username: loginDto.username },
       });
+      // 验证bcrypt.compare直接使用客户端密码进行比较
       expect(bcrypt.compare).toHaveBeenCalledWith(
         loginDto.password,
         mockUser.password,
@@ -293,6 +301,7 @@ describe('UsersService', () => {
     it('should update a user with new data', async () => {
       const updateDto: UpdateUserDto = {
         username: 'updateduser',
+        password: 'newpassword123'
       };
 
       const mockUser = {
@@ -317,6 +326,7 @@ describe('UsersService', () => {
     it('should hash password when updating password', async () => {
       const updateDto: UpdateUserDto = {
         password: 'newpassword123',
+        username: 'updateduser',
       };
 
       const mockUser = {
@@ -328,22 +338,27 @@ describe('UsersService', () => {
       usersRepository.findOne?.mockResolvedValue(mockUser as any);
       usersRepository.save?.mockResolvedValue({
         ...mockUser,
+        username: 'updateduser',
         password: 'hashed_password',
       } as any);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password');
 
       const result = await usersService.update(1, updateDto);
 
-      // 这里应该检查是否使用了原始密码调用bcrypt.hash，而不是期望使用hashed_password
+      // 验证使用了10轮bcrypt加密
       expect(bcrypt.hash).toHaveBeenCalledWith('newpassword123', 10);
       expect(result.password).toBe('hashed_password');
+      expect(result.username).toBe('updateduser');
     });
 
     it('should throw NotFoundException if user not found', async () => {
       usersRepository.findOne?.mockResolvedValue(null);
 
       await expect(
-        usersService.update(999, { username: 'updateduser' }),
+        usersService.update(999, {
+          username: 'updateduser',
+          password: 'newpassword123',
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });

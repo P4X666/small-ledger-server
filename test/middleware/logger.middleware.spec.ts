@@ -37,7 +37,7 @@ describe('loggerMiddleware', () => {
       on: jest.fn((event, callback) => {
         if (event === 'finish') {
           // Save callback to call later
-          (mockRes as any).finishCallback = callback;
+          mockRes.finishCallback = callback;
         }
         return mockRes;
       }),
@@ -51,22 +51,24 @@ describe('loggerMiddleware', () => {
     loggerMiddleware(mockReq, mockRes, mockNext);
 
     expect(logger.info).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({
-      message: 'API Request Received',
-      request: expect.objectContaining({
-        method: mockReq.method,
-        url: mockReq.originalUrl,
-        headers: expect.objectContaining({
-          'user-agent': mockReq.headers['user-agent'],
-          'content-type': mockReq.headers['content-type'],
-          authorization: '***',
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'API Request Received',
+        request: expect.objectContaining({
+          method: mockReq.method,
+          url: mockReq.originalUrl,
+          headers: expect.objectContaining({
+            'user-agent': mockReq.headers['user-agent'],
+            'content-type': mockReq.headers['content-type'],
+            authorization: '***',
+          }),
+          body: mockReq.body,
+          query: mockReq.query,
+          params: mockReq.params,
+          ip: mockReq.ip,
         }),
-        body: mockReq.body,
-        query: mockReq.query,
-        params: mockReq.params,
-        ip: mockReq.ip,
       }),
-    }));
+    );
 
     expect(mockNext).toHaveBeenCalled();
   });
@@ -78,23 +80,25 @@ describe('loggerMiddleware', () => {
     (logger.info as jest.Mock).mockClear();
 
     // Simulate response finish event
-    if ((mockRes as any).finishCallback) {
-      (mockRes as any).finishCallback();
+    if (mockRes.finishCallback) {
+      mockRes.finishCallback();
     }
 
     expect(logger.info).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({
-      message: 'API Response Sent',
-      request: expect.objectContaining({
-        method: mockReq.method,
-        url: mockReq.originalUrl,
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'API Response Sent',
+        request: expect.objectContaining({
+          method: mockReq.method,
+          url: mockReq.originalUrl,
+        }),
+        response: expect.objectContaining({
+          statusCode: mockRes.statusCode,
+          statusMessage: mockRes.statusMessage,
+          responseTime: expect.stringMatching(/\d+ms/),
+        }),
       }),
-      response: expect.objectContaining({
-        statusCode: mockRes.statusCode,
-        statusMessage: mockRes.statusMessage,
-        responseTime: expect.stringMatching(/\d+ms/),
-      }),
-    }));
+    );
   });
 
   it('should handle requests without authorization header', () => {
@@ -103,13 +107,15 @@ describe('loggerMiddleware', () => {
 
     loggerMiddleware(mockReq, mockRes, mockNext);
 
-    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({
-      request: expect.objectContaining({
-        headers: expect.objectContaining({
-          authorization: undefined,
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          headers: expect.objectContaining({
+            authorization: undefined,
+          }),
         }),
       }),
-    }));
+    );
   });
 
   it('should call next function', () => {
@@ -132,11 +138,13 @@ describe('loggerMiddleware', () => {
 
       loggerMiddleware(mockReq, mockRes, mockNext);
 
-      expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({
-        request: expect.objectContaining({
-          method,
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({
+          request: expect.objectContaining({
+            method,
+          }),
         }),
-      }));
+      );
 
       expect(mockNext).toHaveBeenCalled();
     }
