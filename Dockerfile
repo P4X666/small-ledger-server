@@ -36,8 +36,11 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 
-# 复制环境变量示例文件
-COPY --from=builder /app/.env.production ./
+# 复制启动脚本
+COPY start.sh ./
+
+# 给启动脚本添加执行权限
+RUN chmod +x start.sh
 
 # 更改文件所有者为非 root 用户
 RUN chown -R nestjs:nodejs /app
@@ -50,6 +53,8 @@ EXPOSE 3000
 
 # 设置环境变量
 ENV NODE_ENV=production
+ENV PORT=3000
+
 
 # 启动应用
-CMD ["node", "dist/main"]
+CMD ["./start.sh"]

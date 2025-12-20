@@ -11,6 +11,7 @@ log2/
 # 环境变量文件
 .env
 .env.development
+.env.production
 
 # 测试文件
 test/
