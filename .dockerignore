@@ -1,0 +1,38 @@
+# 依赖目录
+node_modules/
+
+# 构建输出目录
+dist/
+
+# 日志文件
+*.log
+log2/
+
+# 环境变量文件
+.env
+.env.development
+
+# 测试文件
+test/
+
+# 编辑器配置文件
+.vscode/
+.idea/
+
+# 版本控制文件
+.git/
+.gitignore
+
+# 其他配置文件
+.trae/
+doc/
+
+# 构建脚本
+build.sh
+
+# 数据库文件
+*.sql
+
+# 其他临时文件
+*.tmp
+*.temp
