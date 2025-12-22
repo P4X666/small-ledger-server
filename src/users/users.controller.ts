@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  HttpCode,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { RegisterUserDto, LoginUserDto, UpdateUserDto } from './users.dto';
@@ -23,6 +24,7 @@ export class UsersController {
 
   // 用户登录
   @Post('login')
+  @HttpCode(200)
   async login(
     @Body() loginUserDto: LoginUserDto,
   ): Promise<{ access_token: string }> {

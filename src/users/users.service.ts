@@ -36,7 +36,9 @@ export class UsersService {
   async login(loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
     // 参数验证
     if (!loginUserDto.username || !loginUserDto.password) {
-      logger.warn(`Login attempt with missing credentials: ${loginUserDto.username || 'unknown'}`);
+      logger.warn(
+        `Login attempt with missing credentials: ${loginUserDto.username || 'unknown'}`,
+      );
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -44,7 +46,9 @@ export class UsersService {
     const user = await this.findByUsername(loginUserDto.username);
 
     if (!user) {
-      logger.warn(`Login attempt for non-existent user: ${loginUserDto.username}`);
+      logger.warn(
+        `Login attempt for non-existent user: ${loginUserDto.username}`,
+      );
       throw new UnauthorizedException('Invalid credentials');
     }
 

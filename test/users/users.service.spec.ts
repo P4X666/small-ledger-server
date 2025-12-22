@@ -301,7 +301,7 @@ describe('UsersService', () => {
     it('should update a user with new data', async () => {
       const updateDto: UpdateUserDto = {
         username: 'updateduser',
-        password: 'newpassword123'
+        password: 'newpassword123',
       };
 
       const mockUser = {

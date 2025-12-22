@@ -1,25 +1,19 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '../users/users.entity';
-import { UsersService } from '../users/users.service';
+import { UsersModule } from '../users/users.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
+import { jwtConfig } from '../config/jwt.config';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    forwardRef(() => UsersModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your_jwt_secret_key_here',
-      signOptions: {
-        expiresIn: process.env.JWT_EXPIRES_IN || ('7d' as any),
-      },
-    }),
+    JwtModule.register(jwtConfig),
   ],
-  providers: [AuthService, UsersService, JwtStrategy],
+  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
   exports: [AuthService, JwtModule, PassportModule],
 })

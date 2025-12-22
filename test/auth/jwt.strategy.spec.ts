@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtStrategy } from '../../src/auth/jwt.strategy';
 import { UsersService } from '../../src/users/users.service';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 // Mock UsersService
 jest.mock('../../src/users/users.service');
@@ -41,7 +41,7 @@ describe('JwtStrategy', () => {
       expect(result).toEqual(mockUser);
     });
 
-    it('should throw NotFoundException when user not found', async () => {
+    it('should throw UnauthorizedException when user not found', async () => {
       const payload = { sub: 999, username: 'nonexistentuser' };
 
       usersService.findOne.mockRejectedValue(
@@ -49,7 +49,7 @@ describe('JwtStrategy', () => {
       );
 
       await expect(jwtStrategy.validate(payload)).rejects.toThrow(
-        NotFoundException,
+        UnauthorizedException,
       );
       expect(usersService.findOne).toHaveBeenCalledWith(payload.sub);
     });
