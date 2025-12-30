@@ -1,15 +1,16 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { writeFileSync } from 'fs';
+// import { writeFileSync } from 'fs';
 import { AppModule } from './app.module';
 import { loggerMiddleware } from './middleware/logger.middleware';
 import logger from './utils/logger';
-import { ResponseInterceptor } from './utils/response.interceptor';
+import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { HttpExceptionFilter } from './utils/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const reflector = app.get(Reflector);
 
   // 启用CORS
   app.enableCors();
@@ -20,11 +21,14 @@ async function bootstrap() {
   // 使用验证管道
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
+      whitelist: true, // 自动删除未定义的属性
       transform: true,
       disableErrorMessages: false,
     }),
   );
+
+  // 全局开启 class-transformer 自动序列化
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector),);
 
   // 使用全局响应拦截器
   app.useGlobalInterceptors(new ResponseInterceptor());

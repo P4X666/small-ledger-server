@@ -14,6 +14,7 @@ import { Task } from './tasks.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetCurrentUser } from '../auth/get-current-user.decorator';
 import { User } from '../users/users.entity';
+import type { TaskTimePeriod } from '../enum';
 
 @Controller('api/tasks')
 @UseGuards(JwtAuthGuard)
@@ -31,6 +32,24 @@ export class TasksController {
   @Get()
   async findAll(@GetCurrentUser() user: User): Promise<Task[]> {
     return this.tasksService.findAllByUserId(user.id);
+  }
+
+  @Get('by-time/:period')
+  async findByTimePeriod(
+    @Param('period') period: TaskTimePeriod,
+    @GetCurrentUser() user: User,
+  ): Promise<Task[]> {
+    return this.tasksService.findByTimePeriod(user.id, period);
+  }
+
+  @Get('by-quadrant')
+  async findByQuadrant(@GetCurrentUser() user: User): Promise<{
+    first: Task[];
+    second: Task[];
+    third: Task[];
+    fourth: Task[];
+  }> {
+    return this.tasksService.findByQuadrant(user.id);
   }
 
   @Get(':id')
@@ -65,18 +84,5 @@ export class TasksController {
     @GetCurrentUser() user: User,
   ): Promise<Task> {
     return this.tasksService.updateStatus(+id, user.id, updateTaskStatusDto);
-  }
-
-  @Get('by-time/:period')
-  async findByTimePeriod(
-    @Param('period') period: 'week' | 'month' | 'year',
-    @GetCurrentUser() user: User,
-  ): Promise<Task[]> {
-    return this.tasksService.findByTimePeriod(user.id, period);
-  }
-
-  @Get('by-quadrant')
-  async findByQuadrant(@GetCurrentUser() user: User): Promise<Task[]> {
-    return this.tasksService.findByQuadrant(user.id);
   }
 }

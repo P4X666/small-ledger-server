@@ -8,6 +8,7 @@ import {
   UpdateTaskStatusDto,
 } from '../../src/tasks/tasks.dto';
 import { NotFoundException } from '@nestjs/common';
+import { TaskPriority, TaskStatus, TaskTimePeriod } from '../../src/enum';
 
 // Mock factory
 const mockRepository = jest.fn(() => ({
@@ -50,9 +51,11 @@ describe('TasksService', () => {
       const createDto: CreateTaskDto = {
         title: 'Test Task',
         description: 'Test Description',
-        time_period: 'week',
-        priority: 'high',
-        status: 'pending',
+        time_period: TaskTimePeriod.Week,
+        // priority: TaskPriority.High,
+        // status: TaskStatus.Pending,
+        importance: 3,
+        urgency: 3,
         // deadline: new Date(),
         // quadrant: 1,
       };
@@ -61,6 +64,8 @@ describe('TasksService', () => {
 
       expect(tasksRepository.create).toHaveBeenCalledWith({
         ...createDto,
+        priority: TaskPriority.Low,
+        status: TaskStatus.InProgress,
         user_id: 1,
       });
       expect(tasksRepository.save).toHaveBeenCalled();
@@ -139,6 +144,11 @@ describe('TasksService', () => {
       const updateDto: UpdateTaskDto = {
         title: 'Updated Task',
         description: 'Updated Description',
+        time_period: TaskTimePeriod.Week,
+        priority: TaskPriority.High,
+        status: TaskStatus.Pending,
+        importance: 3,
+        urgency: 3,
       };
 
       const mockTask = {
@@ -167,7 +177,15 @@ describe('TasksService', () => {
       tasksRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        tasksService.update(999, 1, { title: 'Updated Task' }),
+        tasksService.update(999, 1, {
+          title: 'Updated Task',
+          description: 'Updated Description',
+          time_period: TaskTimePeriod.Week,
+          priority: TaskPriority.High,
+          status: TaskStatus.Pending,
+          importance: 3,
+          urgency: 3,
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -197,14 +215,14 @@ describe('TasksService', () => {
   describe('updateStatus', () => {
     it('should update the status of a task', async () => {
       const statusDto: UpdateTaskStatusDto = {
-        status: 'completed',
+        status: TaskStatus.Completed,
       };
 
       const mockTask = {
         id: 1,
         user_id: 1,
         title: 'Test Task',
-        status: 'pending',
+        status: TaskStatus.Pending,
       };
 
       tasksRepository.findOne.mockResolvedValue(mockTask as any);
@@ -224,7 +242,7 @@ describe('TasksService', () => {
       tasksRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        tasksService.updateStatus(999, 1, { status: 'completed' }),
+        tasksService.updateStatus(999, 1, { status: TaskStatus.Completed }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -232,21 +250,21 @@ describe('TasksService', () => {
   describe('findByTimePeriod', () => {
     it('should return tasks by time period', async () => {
       const mockTasks = [
-        { id: 1, user_id: 1, title: 'Weekly Task', time_period: 'week' },
+        { id: 1, user_id: 1, title: 'Weekly Task', time_period: TaskTimePeriod.Week },
         {
           id: 2,
           user_id: 1,
           title: 'Another Weekly Task',
-          time_period: 'week',
+          time_period: TaskTimePeriod.Week,
         },
       ];
 
       tasksRepository.find.mockResolvedValue(mockTasks as any);
 
-      const result = await tasksService.findByTimePeriod(1, 'week');
+      const result = await tasksService.findByTimePeriod(1, TaskTimePeriod.Week);
 
       expect(tasksRepository.find).toHaveBeenCalledWith({
-        where: { user_id: 1, time_period: 'week' },
+        where: { user_id: 1, time_period: TaskTimePeriod.Week },
       });
       expect(result).toEqual(mockTasks);
     });
@@ -258,20 +276,22 @@ describe('TasksService', () => {
 
       tasksRepository.find.mockResolvedValue(mockTasks as any);
 
-      const result = await tasksService.findByTimePeriod(1, 'month');
+      const result = await tasksService.findByTimePeriod(1, TaskTimePeriod.Month);
 
       expect(tasksRepository.find).toHaveBeenCalledWith({
-        where: { user_id: 1, time_period: 'month' },
+        where: { user_id: 1, time_period: TaskTimePeriod.Month },
       });
       expect(result).toEqual(mockTasks);
     });
   });
 
   describe('findByQuadrant', () => {
-    it('should return all tasks for a user when finding by quadrant', async () => {
+    it('should return tasks grouped by quadrant for a user', async () => {
       const mockTasks = [
-        { id: 1, user_id: 1, title: 'Task 1', quadrant: 1 },
-        { id: 2, user_id: 1, title: 'Task 2', quadrant: 2 },
+        { id: 1, user_id: 1, title: 'Task 1', importance: 4, urgency: 4 },
+        { id: 2, user_id: 1, title: 'Task 2', importance: 4, urgency: 3 },
+        { id: 3, user_id: 1, title: 'Task 3', importance: 3, urgency: 4 },
+        { id: 4, user_id: 1, title: 'Task 4', importance: 3, urgency: 3 },
       ];
 
       tasksRepository.find.mockResolvedValue(mockTasks as any);
@@ -281,7 +301,12 @@ describe('TasksService', () => {
       expect(tasksRepository.find).toHaveBeenCalledWith({
         where: { user_id: 1 },
       });
-      expect(result).toEqual(mockTasks);
+      expect(result).toEqual({
+        first: [mockTasks[0]],
+        second: [mockTasks[1]],
+        third: [mockTasks[2]],
+        fourth: [mockTasks[3]],
+      });
     });
   });
 });

@@ -1,3 +1,4 @@
+import { Expose } from 'class-transformer';
 import {
   Entity,
   Column,
@@ -17,9 +18,11 @@ export class User {
   @Column({ nullable: false, length: 255 })
   password: string;
 
+  @Expose({ name: 'createdAt' })
   @CreateDateColumn()
   created_at: Date;
 
+  @Expose({ name: 'updatedAt' })
   @UpdateDateColumn()
   updated_at: Date;
 }

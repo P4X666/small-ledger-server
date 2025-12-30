@@ -5,8 +5,9 @@ import {
   IsInt,
   Min,
   Max,
-  IsDateString,
 } from 'class-validator';
+import { TaskPriority, TaskStatus, TaskTimePeriod } from '../enum';
+import { Transform } from 'class-transformer';
 
 // 创建任务DTO
 export class CreateTaskDto {
@@ -18,75 +19,39 @@ export class CreateTaskDto {
   description?: string;
 
   @IsOptional()
-  @IsEnum(['pending', 'in_progress', 'completed'])
-  status?: 'pending' | 'in_progress' | 'completed';
+  @IsEnum(TaskStatus)
+  status?: TaskStatus;
 
   @IsOptional()
-  @IsEnum(['high', 'medium', 'low'])
-  priority?: 'high' | 'medium' | 'low';
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
 
-  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(4)
-  importance?: number;
+  importance: number;
 
-  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(4)
-  urgency?: number;
+  urgency: number;
 
   @IsOptional()
-  @IsEnum(['week', 'month', 'year'])
-  time_period?: 'week' | 'month' | 'year';
+  @IsEnum(TaskTimePeriod)
+  time_period?: TaskTimePeriod;
 
   @IsOptional()
-  @IsDateString()
+  @Transform(({ value }) => new Date(value))
   due_date?: Date;
 }
 
-// 更新任务DTO
-export class UpdateTaskDto {
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsEnum(['pending', 'in_progress', 'completed'])
-  status?: 'pending' | 'in_progress' | 'completed';
-
-  @IsOptional()
-  @IsEnum(['high', 'medium', 'low'])
-  priority?: 'high' | 'medium' | 'low';
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(4)
-  importance?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(4)
-  urgency?: number;
-
-  @IsOptional()
-  @IsEnum(['week', 'month', 'year'])
-  time_period?: 'week' | 'month' | 'year';
-
-  @IsOptional()
-  @IsDateString()
-  due_date?: Date;
+// 更新任务DTO， 所有字段都是可选的
+export class UpdateTaskDto extends CreateTaskDto {
+  
 }
 
 // 更新任务状态DTO
 export class UpdateTaskStatusDto {
-  @IsEnum(['pending', 'in_progress', 'completed'])
-  status: 'pending' | 'in_progress' | 'completed';
+  @IsEnum(TaskStatus)
+  status: TaskStatus;
 }
