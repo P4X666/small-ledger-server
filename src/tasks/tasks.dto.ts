@@ -1,13 +1,6 @@
-import {
-  IsString,
-  IsOptional,
-  IsEnum,
-  IsInt,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsInt, Min, Max } from 'class-validator';
 import { TaskPriority, TaskStatus, TaskTimePeriod } from '../enum';
-import { Transform } from 'class-transformer';
+import { PartialType } from '@nestjs/mapped-types';
 
 // 创建任务DTO
 export class CreateTaskDto {
@@ -29,26 +22,20 @@ export class CreateTaskDto {
   @IsInt()
   @Min(1)
   @Max(4)
-  importance: number;
+  importance: number = 3;
 
   @IsInt()
   @Min(1)
   @Max(4)
-  urgency: number;
+  urgency: number = 3;
 
   @IsOptional()
   @IsEnum(TaskTimePeriod)
-  time_period?: TaskTimePeriod;
-
-  @IsOptional()
-  @Transform(({ value }) => new Date(value))
-  due_date?: Date;
+  timePeriod?: TaskTimePeriod;
 }
 
 // 更新任务DTO， 所有字段都是可选的
-export class UpdateTaskDto extends CreateTaskDto {
-  
-}
+export class UpdateTaskDto extends PartialType(CreateTaskDto) {}
 
 // 更新任务状态DTO
 export class UpdateTaskStatusDto {

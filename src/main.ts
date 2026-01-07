@@ -1,6 +1,7 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { updateGlobalConfig } from 'nestjs-paginate';
 // import { writeFileSync } from 'fs';
 import { AppModule } from './app.module';
 import { loggerMiddleware } from './middleware/logger.middleware';
@@ -9,6 +10,12 @@ import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { HttpExceptionFilter } from './utils/http-exception.filter';
 
 async function bootstrap() {
+  // 设置分页插件的全局默认配置
+  updateGlobalConfig({
+    defaultLimit: 10,
+    defaultMaxLimit: 100,
+  });
+
   const app = await NestFactory.create(AppModule);
   const reflector = app.get(Reflector);
 
@@ -28,7 +35,7 @@ async function bootstrap() {
   );
 
   // 全局开启 class-transformer 自动序列化
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector),);
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
   // 使用全局响应拦截器
   app.useGlobalInterceptors(new ResponseInterceptor());

@@ -93,6 +93,13 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
+  // 获取用户（支持分页）
+  getUsersQueryBuilder() {
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .orderBy('user.id', 'ASC');
+  }
+
   // 根据ID获取用户
   async findOne(id: number): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });

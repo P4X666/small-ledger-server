@@ -8,6 +8,8 @@ import {
   Param,
   UseGuards,
 } from '@nestjs/common';
+import { Paginate, paginate } from 'nestjs-paginate';
+import type { PaginateQuery } from 'nestjs-paginate';
 import { TransactionsService } from './transactions.service';
 import {
   CreateTransactionDto,
@@ -33,8 +35,19 @@ export class TransactionsController {
   }
 
   @Get()
-  async findAll(@GetCurrentUser() user: User): Promise<Transaction[]> {
-    return this.transactionsService.findAllByUserId(user.id);
+  async findAll(
+    @Paginate() query: PaginateQuery,
+    @GetCurrentUser() user: User,
+  ) {
+    return paginate(
+      query,
+      this.transactionsService.getTransactionsQueryBuilder(user.id),
+      {
+        sortableColumns: ['transaction_date', 'amount', 'category'],
+        searchableColumns: ['description', 'category'],
+        defaultSortBy: [['transaction_date', 'DESC']],
+      },
+    );
   }
 
   @Get(':id')

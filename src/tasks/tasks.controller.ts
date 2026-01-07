@@ -8,6 +8,8 @@ import {
   Param,
   UseGuards,
 } from '@nestjs/common';
+import { Paginate, paginate } from 'nestjs-paginate';
+import type { PaginateQuery } from 'nestjs-paginate';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto, UpdateTaskDto, UpdateTaskStatusDto } from './tasks.dto';
 import { Task } from './tasks.entity';
@@ -30,8 +32,18 @@ export class TasksController {
   }
 
   @Get()
-  async findAll(@GetCurrentUser() user: User): Promise<Task[]> {
-    return this.tasksService.findAllByUserId(user.id);
+  async findAll(
+    @Paginate() query: PaginateQuery,
+    @GetCurrentUser() user: User,
+  ) {
+    return paginate(
+      query,
+      this.tasksService.getTasksQueryBuilder(user.id),
+      {
+        sortableColumns: ['id', 'title', 'status', 'importance', 'urgency'],
+        searchableColumns: ['title', 'description'],
+      },
+    );
   }
 
   @Get('by-time/:period')

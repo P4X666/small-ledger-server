@@ -8,6 +8,8 @@ import {
   Param,
   HttpCode,
 } from '@nestjs/common';
+import { Paginate, paginate } from 'nestjs-paginate';
+import type { PaginateQuery } from 'nestjs-paginate';
 import { UsersService } from './users.service';
 import { RegisterUserDto, LoginUserDto, UpdateUserDto } from './users.dto';
 import { User } from './users.entity';
@@ -32,8 +34,12 @@ export class UsersController {
   }
 
   @Get()
-  async findAll(): Promise<User[]> {
-    return this.usersService.findAll();
+  async findAll(@Paginate() query: PaginateQuery) {
+    return paginate(query, this.usersService.getUsersQueryBuilder(), {
+      sortableColumns: ['id', 'username'],
+      searchableColumns: ['username'],
+      defaultSortBy: [['id', 'ASC']],
+    });
   }
 
   @Get(':id')

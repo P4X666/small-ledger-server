@@ -36,6 +36,14 @@ export class TransactionsService {
     });
   }
 
+  // 获取用户的交易记录（支持分页）
+  getTransactionsQueryBuilder(user_id: number) {
+    return this.transactionsRepository
+      .createQueryBuilder('transaction')
+      .where('transaction.user_id = :user_id', { user_id })
+      .orderBy('transaction.transaction_date', 'DESC');
+  }
+
   // 根据ID获取交易记录
   async findOne(id: number, user_id: number): Promise<Transaction> {
     const transaction = await this.transactionsRepository.findOne({

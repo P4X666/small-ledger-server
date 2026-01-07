@@ -20,11 +20,12 @@ export class Task {
   @Column()
   user_id: number;
 
+  @Exclude()
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
+  @Column({ length: 100 })
   title: string;
 
   @Column({ nullable: true })
@@ -40,19 +41,15 @@ export class Task {
   @Column({ type: 'enum', enum: TaskPriority, default: TaskPriority.Medium })
   priority: TaskPriority;
 
-  @Column({ default: 3 })
+  @Column({ type: 'tinyint', default: 3, unsigned: true })
   importance: number;
 
-  @Column({ default: 3 })
+  @Column({ type: 'tinyint', default: 3, unsigned: true })
   urgency: number;
 
   @Expose({ name: 'timePeriod' })
   @Column({ type: 'enum', enum: TaskTimePeriod, default: TaskTimePeriod.Week })
   time_period: TaskTimePeriod;
-
-  @Expose({ name: 'dueDate' })
-  @Column({ nullable: true })
-  due_date: Date;
 
   @Expose({ name: 'createdAt' })
   @CreateDateColumn()

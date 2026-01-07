@@ -1,5 +1,5 @@
 -- 创建用户表
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
   `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '唯一标识',
   `username` VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
   `password` VARCHAR(255) NOT NULL COMMENT '密码（哈希存储）',
@@ -8,15 +8,15 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
 -- 创建任务表
-CREATE TABLE `tasks` (
+CREATE TABLE IF NOT EXISTS `tasks` (
   `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '唯一标识',
   `user_id` INT NOT NULL COMMENT '用户ID',
   `title` VARCHAR(100) NOT NULL COMMENT '任务标题',
   `description` TEXT COMMENT '任务描述',
   `status` ENUM('todo', 'in_progress', 'completed') DEFAULT 'todo' COMMENT '任务状态',
   `priority` ENUM('high', 'medium', 'low') DEFAULT 'medium' COMMENT '优先级',
-  `importance` TINYINT CHECK (importance BETWEEN 1 AND 4) DEFAULT 2 COMMENT '重要性（1-4，对应四象限）',
-  `urgency` TINYINT CHECK (urgency BETWEEN 1 AND 4) DEFAULT 2 COMMENT '紧急性（1-4，对应四象限）',
+  `importance` TINYINT CHECK (importance BETWEEN 1 AND 4) DEFAULT 3 COMMENT '重要性（1-4，对应四象限）',
+  `urgency` TINYINT CHECK (urgency BETWEEN 1 AND 4) DEFAULT 3 COMMENT '紧急性（1-4，对应四象限）',  
   `time_period` ENUM('week', 'month', 'year') DEFAULT 'week' COMMENT '时间周期',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -28,7 +28,7 @@ CREATE TABLE `tasks` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='任务表';
 
 -- 创建交易记录表
-CREATE TABLE `transactions` (
+CREATE TABLE IF NOT EXISTS `transactions` (
   `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '唯一标识',
   `user_id` INT NOT NULL COMMENT '用户ID',
   `type` ENUM('income', 'expense') NOT NULL COMMENT '类型（收入/支出）',
@@ -46,7 +46,7 @@ CREATE TABLE `transactions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='交易记录表';
 
 -- 创建攒钱目标表
-CREATE TABLE `savings_goals` (
+CREATE TABLE IF NOT EXISTS `savings_goals` (
   `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '唯一标识',
   `user_id` INT NOT NULL COMMENT '用户ID',
   `name` VARCHAR(100) NOT NULL COMMENT '目标名称',

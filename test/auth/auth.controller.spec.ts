@@ -85,7 +85,7 @@ describe('AuthController (e2e)', () => {
 
       // Verify the status code is 200 OK (not 201 Created)
       expect(response.status).toBe(200);
-      
+
       // Verify the response body contains access_token and user info
       expect(response.body).toHaveProperty('access_token');
       expect(response.body).toHaveProperty('user');

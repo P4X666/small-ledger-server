@@ -19,6 +19,12 @@ const mockRepository = jest.fn(() => ({
   find: jest.fn().mockResolvedValue([]),
   findOne: jest.fn(),
   delete: jest.fn().mockResolvedValue({ affected: 1 }),
+  createQueryBuilder: jest.fn(() => ({
+    where: jest.fn().mockReturnThis(),
+    addOrderBy: jest.fn().mockReturnThis(),
+    setParameters: jest.fn().mockReturnThis(),
+    getMany: jest.fn().mockResolvedValue([]),
+  })),
 }));
 
 type MockRepository = ReturnType<typeof mockRepository>;
@@ -51,7 +57,7 @@ describe('TasksService', () => {
       const createDto: CreateTaskDto = {
         title: 'Test Task',
         description: 'Test Description',
-        time_period: TaskTimePeriod.Week,
+        timePeriod: TaskTimePeriod.Week,
         // priority: TaskPriority.High,
         // status: TaskStatus.Pending,
         importance: 3,
@@ -74,29 +80,13 @@ describe('TasksService', () => {
     });
   });
 
-  describe('findAllByUserId', () => {
-    it('should return all tasks for a user', async () => {
-      const mockTasks = [
-        { id: 1, user_id: 1, title: 'Task 1', status: 'pending' },
-        { id: 2, user_id: 1, title: 'Task 2', status: 'completed' },
-      ];
+  describe('getTasksQueryBuilder', () => {
+    it('should return a query builder instance for user tasks', () => {
+      const result = tasksService.getTasksQueryBuilder(1);
 
-      tasksRepository.find.mockResolvedValue(mockTasks as any);
-
-      const result = await tasksService.findAllByUserId(1);
-
-      expect(tasksRepository.find).toHaveBeenCalledWith({
-        where: { user_id: 1 },
-      });
-      expect(result).toEqual(mockTasks);
-    });
-
-    it('should return an empty array if no tasks found', async () => {
-      tasksRepository.find.mockResolvedValue([]);
-
-      const result = await tasksService.findAllByUserId(1);
-
-      expect(result).toEqual([]);
+      expect(tasksRepository.createQueryBuilder).toHaveBeenCalledWith('task');
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('object');
     });
   });
 
@@ -144,7 +134,7 @@ describe('TasksService', () => {
       const updateDto: UpdateTaskDto = {
         title: 'Updated Task',
         description: 'Updated Description',
-        time_period: TaskTimePeriod.Week,
+        timePeriod: TaskTimePeriod.Week,
         priority: TaskPriority.High,
         status: TaskStatus.Pending,
         importance: 3,
@@ -180,7 +170,7 @@ describe('TasksService', () => {
         tasksService.update(999, 1, {
           title: 'Updated Task',
           description: 'Updated Description',
-          time_period: TaskTimePeriod.Week,
+          timePeriod: TaskTimePeriod.Week,
           priority: TaskPriority.High,
           status: TaskStatus.Pending,
           importance: 3,
@@ -250,7 +240,12 @@ describe('TasksService', () => {
   describe('findByTimePeriod', () => {
     it('should return tasks by time period', async () => {
       const mockTasks = [
-        { id: 1, user_id: 1, title: 'Weekly Task', time_period: TaskTimePeriod.Week },
+        {
+          id: 1,
+          user_id: 1,
+          title: 'Weekly Task',
+          time_period: TaskTimePeriod.Week,
+        },
         {
           id: 2,
           user_id: 1,
@@ -261,7 +256,10 @@ describe('TasksService', () => {
 
       tasksRepository.find.mockResolvedValue(mockTasks as any);
 
-      const result = await tasksService.findByTimePeriod(1, TaskTimePeriod.Week);
+      const result = await tasksService.findByTimePeriod(
+        1,
+        TaskTimePeriod.Week,
+      );
 
       expect(tasksRepository.find).toHaveBeenCalledWith({
         where: { user_id: 1, time_period: TaskTimePeriod.Week },
@@ -276,7 +274,10 @@ describe('TasksService', () => {
 
       tasksRepository.find.mockResolvedValue(mockTasks as any);
 
-      const result = await tasksService.findByTimePeriod(1, TaskTimePeriod.Month);
+      const result = await tasksService.findByTimePeriod(
+        1,
+        TaskTimePeriod.Month,
+      );
 
       expect(tasksRepository.find).toHaveBeenCalledWith({
         where: { user_id: 1, time_period: TaskTimePeriod.Month },

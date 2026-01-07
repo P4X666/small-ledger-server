@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import {
   Entity,
   Column,
@@ -15,6 +15,7 @@ export class User {
   @Column({ unique: true, nullable: false, length: 50 })
   username: string;
 
+  @Exclude()
   @Column({ nullable: false, length: 255 })
   password: string;
 

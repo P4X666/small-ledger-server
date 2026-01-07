@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ConflictException, NotFoundException } from '@nestjs/common/exceptions';
+import {
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Task } from './tasks.entity';
@@ -41,9 +44,36 @@ export class TasksService {
     return savedTask;
   }
 
-  // 获取用户的所有任务
-  async findAllByUserId(user_id: number): Promise<Task[]> {
-    return this.tasksRepository.find({ where: { user_id } });
+  // 获取用户的任务（支持分页）
+  getTasksQueryBuilder(user_id: number) {
+    return (
+      this.tasksRepository
+        .createQueryBuilder('task')
+        .where('task.user_id = :user_id', { user_id })
+        // 第一步：按状态排序，in_progress 排在最前面
+        .addOrderBy(
+          `CASE task.status WHEN :statusInProgress THEN 0 ELSE 1 END`,
+          'ASC',
+        )
+        // 第二步：按自定义优先级排序
+        .addOrderBy(
+          `CASE 
+          WHEN task.importance = :importance4 AND task.urgency = :urgency4 THEN 0 
+          WHEN task.urgency = :urgency4 THEN 1 
+          WHEN task.importance = :importance4 THEN 2 
+          WHEN task.importance = :importance3 AND task.urgency = :urgency3 THEN 3 
+          ELSE 4 
+        END`,
+          'ASC',
+        )
+        .setParameters({
+          statusInProgress: TaskStatus.InProgress,
+          importance4: 4,
+          urgency4: 4,
+          importance3: 3,
+          urgency3: 3,
+        })
+    );
   }
 
   // 根据ID获取任务
@@ -84,7 +114,7 @@ export class TasksService {
     const task = await this.findOne(id, user_id);
     task.status = updateTaskStatusDto.status;
     const savedTask = await this.tasksRepository.save(task);
-    return savedTask as Task;
+    return savedTask;
   }
 
   // 按时间周期获取任务
@@ -105,21 +135,21 @@ export class TasksService {
     fourth: Task[];
   }> {
     const allTasks = await this.tasksRepository.find({ where: { user_id } });
-    const first: Task[] = []
-    const second: Task[] = []
-    const third: Task[] = []
-    const fourth: Task[] = []
-    allTasks.forEach(task => {
+    const first: Task[] = [];
+    const second: Task[] = [];
+    const third: Task[] = [];
+    const fourth: Task[] = [];
+    allTasks.forEach((task) => {
       if (task.importance === 4 && task.urgency === 4) {
-        first.push(task)
+        first.push(task);
       } else if (task.importance === 4 && task.urgency < 4) {
-        second.push(task)
+        second.push(task);
       } else if (task.importance < 4 && task.urgency === 4) {
-        third.push(task)
+        third.push(task);
       } else {
-        fourth.push(task)
+        fourth.push(task);
       }
-    })
+    });
 
     // 按四象限分组
     return {
