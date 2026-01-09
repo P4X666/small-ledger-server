@@ -159,4 +159,32 @@ export class TasksService {
       fourth,
     };
   }
+
+  // 获取任务统计数据
+  async getTasksStatistics(user_id: number): Promise<{
+    allTasksTotal: number;
+    inProgressTasksTotal: number;
+    highPriorityTasksTotal: number;
+  }> {
+    // 使用查询构建器高效查询统计数据
+    const [allTasksTotal, inProgressTasksTotal, highPriorityTasksTotal] =
+      await Promise.all([
+        // 计算所有任务总数
+        this.tasksRepository.count({ where: { user_id } }),
+        // 计算状态为待完成的任务总数
+        this.tasksRepository.count({
+          where: { user_id, status: TaskStatus.InProgress },
+        }),
+        // 计算高优先级任务总数
+        this.tasksRepository.count({
+          where: { user_id, importance: 4, urgency: 4 },
+        }),
+      ]);
+
+    return {
+      allTasksTotal,
+      inProgressTasksTotal,
+      highPriorityTasksTotal,
+    };
+  }
 }

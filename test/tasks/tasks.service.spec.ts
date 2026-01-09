@@ -18,6 +18,7 @@ const mockRepository = jest.fn(() => ({
     .mockImplementation((task: any) => Promise.resolve({ id: 1, ...task })),
   find: jest.fn().mockResolvedValue([]),
   findOne: jest.fn(),
+  count: jest.fn().mockResolvedValue(0),
   delete: jest.fn().mockResolvedValue({ affected: 1 }),
   createQueryBuilder: jest.fn(() => ({
     where: jest.fn().mockReturnThis(),
@@ -307,6 +308,88 @@ describe('TasksService', () => {
         second: [mockTasks[1]],
         third: [mockTasks[2]],
         fourth: [mockTasks[3]],
+      });
+    });
+  });
+
+  describe('getTasksStatistics', () => {
+    it('should return correct task statistics for a user', async () => {
+      // Mock count method to return different values for different queries
+      const mockCount = jest
+        .fn()
+        .mockResolvedValueOnce(10) // allTasksTotal
+        .mockResolvedValueOnce(5) // inProgressTasksTotal
+        .mockResolvedValueOnce(2); // highPriorityTasksTotal
+
+      // Override the count method
+      (tasksRepository.count as jest.Mock) = mockCount;
+
+      const result = await tasksService.getTasksStatistics(1);
+
+      expect(mockCount).toHaveBeenCalledTimes(3);
+      // Verify all tasks count call
+      expect(mockCount).toHaveBeenNthCalledWith(1, {
+        where: { user_id: 1 },
+      });
+      // Verify in progress tasks count call
+      expect(mockCount).toHaveBeenNthCalledWith(2, {
+        where: { user_id: 1, status: TaskStatus.InProgress },
+      });
+      // Verify high priority tasks count call
+      expect(mockCount).toHaveBeenNthCalledWith(3, {
+        where: { user_id: 1, importance: 4, urgency: 4 },
+      });
+
+      expect(result).toEqual({
+        allTasksTotal: 10,
+        inProgressTasksTotal: 5,
+        highPriorityTasksTotal: 2,
+      });
+    });
+
+    it('should return zero values when no tasks exist', async () => {
+      // Mock count method to return 0 for all queries
+      const mockCount = jest.fn().mockResolvedValue(0);
+      (tasksRepository.count as jest.Mock) = mockCount;
+
+      const result = await tasksService.getTasksStatistics(1);
+
+      expect(mockCount).toHaveBeenCalledTimes(3);
+      expect(result).toEqual({
+        allTasksTotal: 0,
+        inProgressTasksTotal: 0,
+        highPriorityTasksTotal: 0,
+      });
+    });
+
+    it('should return correct statistics for different user', async () => {
+      // Mock count method to return different values
+      const mockCount = jest
+        .fn()
+        .mockResolvedValueOnce(7) // allTasksTotal for user 2
+        .mockResolvedValueOnce(3) // inProgressTasksTotal for user 2
+        .mockResolvedValueOnce(1); // highPriorityTasksTotal for user 2
+
+      (tasksRepository.count as jest.Mock) = mockCount;
+
+      const result = await tasksService.getTasksStatistics(2);
+
+      // Verify all calls use user_id: 2
+      expect(mockCount).toHaveBeenCalledTimes(3);
+      expect(mockCount).toHaveBeenNthCalledWith(1, {
+        where: { user_id: 2 },
+      });
+      expect(mockCount).toHaveBeenNthCalledWith(2, {
+        where: { user_id: 2, status: TaskStatus.InProgress },
+      });
+      expect(mockCount).toHaveBeenNthCalledWith(3, {
+        where: { user_id: 2, importance: 4, urgency: 4 },
+      });
+
+      expect(result).toEqual({
+        allTasksTotal: 7,
+        inProgressTasksTotal: 3,
+        highPriorityTasksTotal: 1,
       });
     });
   });

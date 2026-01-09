@@ -74,16 +74,17 @@
 | PUT  | /api/users/:id | 更新用户信息 |
 
 ### 3. 任务管理接口
-| 方法     | 路径                         | 描述              |
-| ------ | -------------------------- | --------------- |
-| POST   | /api/tasks                 | 创建任务            |
-| GET    | /api/tasks                 | 获取任务列表（支持筛选和分页） |
-| GET    | /api/tasks/:id             | 获取任务详情          |
-| PUT    | /api/tasks/:id             | 更新任务            |
-| DELETE | /api/tasks/:id             | 删除任务            |
-| PUT    | /api/tasks/:id/status      | 更新任务状态          |
-| GET    | /api/tasks/by-time/:period | 按时间周期获取任务       |
-| GET    | /api/tasks/by-quadrant     | 按四象限获取任务        |
+| 方法     | 路径                             | 描述              |
+| ------ | --------------------------------  | --------------- |
+| POST   | /api/tasks                        | 创建任务            |
+| GET    | /api/tasks                        | 获取任务列表（支持筛选和分页） |
+| GET    | /api/tasks/:id                    | 获取任务详情          |
+| PUT    | /api/tasks/:id                    | 更新任务            |
+| DELETE | /api/tasks/:id                    | 删除任务            |
+| PUT    | /api/tasks/:id/status             | 更新任务状态          |
+| GET    | /api/tasks/by-time/:period        | 按时间周期获取任务       |
+| GET    | /api/tasks/by-quadrant            | 按四象限获取任务        |
+| GET    | /api/tasks/getTasksNum     | 获取任务统计数据        |
 
 ### 4. 记账功能接口
 | 方法     | 路径                           | 描述                |

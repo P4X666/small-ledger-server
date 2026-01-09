@@ -36,14 +36,10 @@ export class TasksController {
     @Paginate() query: PaginateQuery,
     @GetCurrentUser() user: User,
   ) {
-    return paginate(
-      query,
-      this.tasksService.getTasksQueryBuilder(user.id),
-      {
-        sortableColumns: ['id', 'title', 'status', 'importance', 'urgency'],
-        searchableColumns: ['title', 'description'],
-      },
-    );
+    return paginate(query, this.tasksService.getTasksQueryBuilder(user.id), {
+      sortableColumns: ['id', 'title', 'status', 'importance', 'urgency'],
+      searchableColumns: ['title', 'description'],
+    });
   }
 
   @Get('by-time/:period')
@@ -62,6 +58,15 @@ export class TasksController {
     fourth: Task[];
   }> {
     return this.tasksService.findByQuadrant(user.id);
+  }
+
+  @Get('getTasksNum')
+  async getTasksStatistics(@GetCurrentUser() user: User): Promise<{
+    allTasksTotal: number;
+    inProgressTasksTotal: number;
+    highPriorityTasksTotal: number;
+  }> {
+    return this.tasksService.getTasksStatistics(user.id);
   }
 
   @Get(':id')
