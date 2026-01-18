@@ -69,15 +69,43 @@ describe('TasksService', () => {
 
       const result = await tasksService.create(1, createDto);
 
+      const { timePeriod, ...restCreateDto } = createDto;
+
       expect(tasksRepository.create).toHaveBeenCalledWith({
-        ...createDto,
+        ...restCreateDto,
         priority: TaskPriority.Low,
         status: TaskStatus.InProgress,
         user_id: 1,
+        time_period: timePeriod,
       });
       expect(tasksRepository.save).toHaveBeenCalled();
       expect(result).toHaveProperty('id');
       expect(result.user_id).toBe(1);
+    });
+
+    it('should correctly handle timePeriod field with month value', async () => {
+      const createDto: CreateTaskDto = {
+        title: 'Test Task with Month',
+        description: 'Test Description',
+        timePeriod: TaskTimePeriod.Month,
+        importance: 4,
+        urgency: 4,
+      };
+
+      const result = await tasksService.create(1, createDto);
+
+      const { timePeriod, ...restCreateDto } = createDto;
+
+      expect(tasksRepository.create).toHaveBeenCalledWith({
+        ...restCreateDto,
+        priority: TaskPriority.High,
+        status: TaskStatus.InProgress,
+        user_id: 1,
+        time_period: TaskTimePeriod.Month,
+      });
+      expect(tasksRepository.save).toHaveBeenCalled();
+      expect(result).toHaveProperty('id');
+      expect(result.time_period).toBe(TaskTimePeriod.Month);
     });
   });
 
@@ -88,6 +116,72 @@ describe('TasksService', () => {
       expect(tasksRepository.createQueryBuilder).toHaveBeenCalledWith('task');
       expect(result).toBeDefined();
       expect(typeof result).toBe('object');
+    });
+
+    it('should include timePeriod filter when provided', () => {
+      // 模拟查询构建器的方法链
+      const mockWhere = jest.fn().mockReturnThis();
+      const mockAndWhere = jest.fn().mockReturnThis();
+      const mockAddOrderBy = jest.fn().mockReturnThis();
+      const mockSetParameters = jest.fn().mockReturnThis();
+
+      (tasksRepository.createQueryBuilder as jest.Mock).mockReturnValue({
+        where: mockWhere,
+        andWhere: mockAndWhere,
+        addOrderBy: mockAddOrderBy,
+        setParameters: mockSetParameters,
+      });
+
+      const result = tasksService.getTasksQueryBuilder(1, TaskTimePeriod.Month);
+
+      expect(tasksRepository.createQueryBuilder).toHaveBeenCalledWith('task');
+      expect(mockWhere).toHaveBeenCalledWith(
+        'task.user_id = :user_id AND task.isDeleted = false',
+        { user_id: 1 },
+      );
+      expect(mockAndWhere).toHaveBeenCalledWith(
+        'task.time_period = :timePeriod',
+        { timePeriod: TaskTimePeriod.Month },
+      );
+      expect(mockSetParameters).toHaveBeenCalledWith({
+        statusInProgress: TaskStatus.InProgress,
+        importance4: 4,
+        urgency4: 4,
+        importance3: 3,
+        urgency3: 3,
+        timePeriod: TaskTimePeriod.Month,
+      });
+      expect(result).toBeDefined();
+    });
+
+    it('should not include timePeriod filter when not provided', () => {
+      // 模拟查询构建器的方法链
+      const mockWhere = jest.fn().mockReturnThis();
+      const mockAddOrderBy = jest.fn().mockReturnThis();
+      const mockSetParameters = jest.fn().mockReturnThis();
+
+      (tasksRepository.createQueryBuilder as jest.Mock).mockReturnValue({
+        where: mockWhere,
+        andWhere: jest.fn(), // 这个方法不应该被调用
+        addOrderBy: mockAddOrderBy,
+        setParameters: mockSetParameters,
+      });
+
+      const result = tasksService.getTasksQueryBuilder(1);
+
+      expect(tasksRepository.createQueryBuilder).toHaveBeenCalledWith('task');
+      expect(mockWhere).toHaveBeenCalledWith(
+        'task.user_id = :user_id AND task.isDeleted = false',
+        { user_id: 1 },
+      );
+      expect(mockSetParameters).toHaveBeenCalledWith({
+        statusInProgress: TaskStatus.InProgress,
+        importance4: 4,
+        urgency4: 4,
+        importance3: 3,
+        urgency3: 3,
+      });
+      expect(result).toBeDefined();
     });
   });
 
@@ -151,9 +245,12 @@ describe('TasksService', () => {
       };
 
       tasksRepository.findOne.mockResolvedValue(mockTask as any);
+      const { timePeriod, ...restUpdateDto } = updateDto;
+
       tasksRepository.save.mockResolvedValue({
         ...mockTask,
-        ...updateDto,
+        ...restUpdateDto,
+        time_period: timePeriod,
       } as any);
 
       const result = await tasksService.update(1, 1, updateDto);
@@ -182,17 +279,30 @@ describe('TasksService', () => {
   });
 
   describe('remove', () => {
-    it('should delete a task by id for a user', async () => {
-      await tasksService.remove(1, 1);
-
-      expect(tasksRepository.delete).toHaveBeenCalledWith({
+    it('should mark a task as deleted for a user', async () => {
+      const mockTask = {
         id: 1,
         user_id: 1,
+        title: 'Test Task',
+        isDeleted: false,
+      };
+
+      tasksRepository.findOne.mockResolvedValue(mockTask as any);
+      tasksRepository.save.mockResolvedValue({ ...mockTask, isDeleted: true });
+
+      await tasksService.remove(1, 1);
+
+      expect(tasksRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 1, user_id: 1 },
+      });
+      expect(tasksRepository.save).toHaveBeenCalledWith({
+        ...mockTask,
+        isDeleted: true,
       });
     });
 
     it('should throw NotFoundException if task not found', async () => {
-      tasksRepository.delete.mockResolvedValue({ affected: 0 });
+      tasksRepository.findOne.mockResolvedValue(null);
 
       await expect(tasksService.remove(999, 1)).rejects.toThrow(
         NotFoundException,
@@ -263,7 +373,11 @@ describe('TasksService', () => {
       );
 
       expect(tasksRepository.find).toHaveBeenCalledWith({
-        where: { user_id: 1, time_period: TaskTimePeriod.Week },
+        where: {
+          user_id: 1,
+          time_period: TaskTimePeriod.Week,
+          isDeleted: false,
+        },
       });
       expect(result).toEqual(mockTasks);
     });
@@ -281,7 +395,11 @@ describe('TasksService', () => {
       );
 
       expect(tasksRepository.find).toHaveBeenCalledWith({
-        where: { user_id: 1, time_period: TaskTimePeriod.Month },
+        where: {
+          user_id: 1,
+          time_period: TaskTimePeriod.Month,
+          isDeleted: false,
+        },
       });
       expect(result).toEqual(mockTasks);
     });
@@ -301,7 +419,7 @@ describe('TasksService', () => {
       const result = await tasksService.findByQuadrant(1);
 
       expect(tasksRepository.find).toHaveBeenCalledWith({
-        where: { user_id: 1 },
+        where: { user_id: 1, isDeleted: false },
       });
       expect(result).toEqual({
         first: [mockTasks[0]],
@@ -322,22 +440,22 @@ describe('TasksService', () => {
         .mockResolvedValueOnce(2); // highPriorityTasksTotal
 
       // Override the count method
-      (tasksRepository.count as jest.Mock) = mockCount;
+      tasksRepository.count = mockCount;
 
       const result = await tasksService.getTasksStatistics(1);
 
       expect(mockCount).toHaveBeenCalledTimes(3);
       // Verify all tasks count call
       expect(mockCount).toHaveBeenNthCalledWith(1, {
-        where: { user_id: 1 },
+        where: { user_id: 1, isDeleted: false },
       });
       // Verify in progress tasks count call
       expect(mockCount).toHaveBeenNthCalledWith(2, {
-        where: { user_id: 1, status: TaskStatus.InProgress },
+        where: { user_id: 1, status: TaskStatus.InProgress, isDeleted: false },
       });
       // Verify high priority tasks count call
       expect(mockCount).toHaveBeenNthCalledWith(3, {
-        where: { user_id: 1, importance: 4, urgency: 4 },
+        where: { user_id: 1, importance: 4, urgency: 4, isDeleted: false },
       });
 
       expect(result).toEqual({
@@ -350,11 +468,21 @@ describe('TasksService', () => {
     it('should return zero values when no tasks exist', async () => {
       // Mock count method to return 0 for all queries
       const mockCount = jest.fn().mockResolvedValue(0);
-      (tasksRepository.count as jest.Mock) = mockCount;
+      tasksRepository.count = mockCount;
 
       const result = await tasksService.getTasksStatistics(1);
 
       expect(mockCount).toHaveBeenCalledTimes(3);
+      // Verify all calls include isDeleted: false
+      expect(mockCount).toHaveBeenNthCalledWith(1, {
+        where: { user_id: 1, isDeleted: false },
+      });
+      expect(mockCount).toHaveBeenNthCalledWith(2, {
+        where: { user_id: 1, status: TaskStatus.InProgress, isDeleted: false },
+      });
+      expect(mockCount).toHaveBeenNthCalledWith(3, {
+        where: { user_id: 1, importance: 4, urgency: 4, isDeleted: false },
+      });
       expect(result).toEqual({
         allTasksTotal: 0,
         inProgressTasksTotal: 0,
@@ -370,20 +498,20 @@ describe('TasksService', () => {
         .mockResolvedValueOnce(3) // inProgressTasksTotal for user 2
         .mockResolvedValueOnce(1); // highPriorityTasksTotal for user 2
 
-      (tasksRepository.count as jest.Mock) = mockCount;
+      tasksRepository.count = mockCount;
 
       const result = await tasksService.getTasksStatistics(2);
 
-      // Verify all calls use user_id: 2
+      // Verify all calls use user_id: 2 and include isDeleted: false
       expect(mockCount).toHaveBeenCalledTimes(3);
       expect(mockCount).toHaveBeenNthCalledWith(1, {
-        where: { user_id: 2 },
+        where: { user_id: 2, isDeleted: false },
       });
       expect(mockCount).toHaveBeenNthCalledWith(2, {
-        where: { user_id: 2, status: TaskStatus.InProgress },
+        where: { user_id: 2, status: TaskStatus.InProgress, isDeleted: false },
       });
       expect(mockCount).toHaveBeenNthCalledWith(3, {
-        where: { user_id: 2, importance: 4, urgency: 4 },
+        where: { user_id: 2, importance: 4, urgency: 4, isDeleted: false },
       });
 
       expect(result).toEqual({
@@ -391,6 +519,115 @@ describe('TasksService', () => {
         inProgressTasksTotal: 3,
         highPriorityTasksTotal: 1,
       });
+    });
+  });
+
+  describe('getDeletedTasksQueryBuilder', () => {
+    it('should return a query builder for deleted tasks without filters', () => {
+      // Mock query builder methods
+      const mockWhere = jest.fn().mockReturnThis();
+      const mockAndWhere = jest.fn().mockReturnThis();
+
+      (tasksRepository.createQueryBuilder as jest.Mock).mockReturnValue({
+        where: mockWhere,
+        andWhere: mockAndWhere,
+      });
+
+      const result = tasksService.getDeletedTasksQueryBuilder(1);
+
+      expect(tasksRepository.createQueryBuilder).toHaveBeenCalledWith('task');
+      expect(mockWhere).toHaveBeenCalledWith(
+        'task.user_id = :user_id AND task.isDeleted = true',
+        { user_id: 1 },
+      );
+      expect(mockAndWhere).not.toHaveBeenCalled();
+      expect(result).toBeDefined();
+    });
+
+    it('should return a query builder for deleted tasks with status filter', () => {
+      // Mock query builder methods
+      const mockWhere = jest.fn().mockReturnThis();
+      const mockAndWhere = jest.fn().mockReturnThis();
+
+      (tasksRepository.createQueryBuilder as jest.Mock).mockReturnValue({
+        where: mockWhere,
+        andWhere: mockAndWhere,
+      });
+
+      const result = tasksService.getDeletedTasksQueryBuilder(
+        1,
+        TaskStatus.Completed,
+      );
+
+      expect(tasksRepository.createQueryBuilder).toHaveBeenCalledWith('task');
+      expect(mockWhere).toHaveBeenCalledWith(
+        'task.user_id = :user_id AND task.isDeleted = true',
+        { user_id: 1 },
+      );
+      expect(mockAndWhere).toHaveBeenCalledWith('task.status = :status', {
+        status: TaskStatus.Completed,
+      });
+      expect(result).toBeDefined();
+    });
+
+    it('should return a query builder for deleted tasks with timePeriod filter', () => {
+      // Mock query builder methods
+      const mockWhere = jest.fn().mockReturnThis();
+      const mockAndWhere = jest.fn().mockReturnThis();
+
+      (tasksRepository.createQueryBuilder as jest.Mock).mockReturnValue({
+        where: mockWhere,
+        andWhere: mockAndWhere,
+      });
+
+      const result = tasksService.getDeletedTasksQueryBuilder(
+        1,
+        undefined,
+        TaskTimePeriod.Month,
+      );
+
+      expect(tasksRepository.createQueryBuilder).toHaveBeenCalledWith('task');
+      expect(mockWhere).toHaveBeenCalledWith(
+        'task.user_id = :user_id AND task.isDeleted = true',
+        { user_id: 1 },
+      );
+      expect(mockAndWhere).toHaveBeenCalledWith(
+        'task.time_period = :timePeriod',
+        { timePeriod: TaskTimePeriod.Month },
+      );
+      expect(result).toBeDefined();
+    });
+
+    it('should return a query builder for deleted tasks with both status and timePeriod filters', () => {
+      // Mock query builder methods
+      const mockWhere = jest.fn().mockReturnThis();
+      const mockAndWhere = jest.fn().mockReturnThis();
+
+      (tasksRepository.createQueryBuilder as jest.Mock).mockReturnValue({
+        where: mockWhere,
+        andWhere: mockAndWhere,
+      });
+
+      const result = tasksService.getDeletedTasksQueryBuilder(
+        1,
+        TaskStatus.Completed,
+        TaskTimePeriod.Month,
+      );
+
+      expect(tasksRepository.createQueryBuilder).toHaveBeenCalledWith('task');
+      expect(mockWhere).toHaveBeenCalledWith(
+        'task.user_id = :user_id AND task.isDeleted = true',
+        { user_id: 1 },
+      );
+      expect(mockAndWhere).toHaveBeenNthCalledWith(1, 'task.status = :status', {
+        status: TaskStatus.Completed,
+      });
+      expect(mockAndWhere).toHaveBeenNthCalledWith(
+        2,
+        'task.time_period = :timePeriod',
+        { timePeriod: TaskTimePeriod.Month },
+      );
+      expect(result).toBeDefined();
     });
   });
 });

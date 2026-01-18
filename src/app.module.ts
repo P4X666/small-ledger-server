@@ -9,6 +9,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { SavingsGoalsModule } from './savings-goals/savings-goals.module';
 import { AuthModule } from './auth/auth.module';
+import { ExcelModule } from './excel/excel.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { AuthModule } from './auth/auth.module';
     TasksModule,
     TransactionsModule,
     SavingsGoalsModule,
+    ExcelModule,
   ],
   controllers: [AppController],
   providers: [AppService],

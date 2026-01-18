@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { Paginate, paginate } from 'nestjs-paginate';
 import type { PaginateQuery } from 'nestjs-paginate';
@@ -34,12 +35,17 @@ export class TasksController {
   @Get()
   async findAll(
     @Paginate() query: PaginateQuery,
+    @Query('timePeriod') timePeriod: TaskTimePeriod,
     @GetCurrentUser() user: User,
   ) {
-    return paginate(query, this.tasksService.getTasksQueryBuilder(user.id), {
-      sortableColumns: ['id', 'title', 'status', 'importance', 'urgency'],
-      searchableColumns: ['title', 'description'],
-    });
+    return paginate(
+      query,
+      this.tasksService.getTasksQueryBuilder(user.id, timePeriod),
+      {
+        sortableColumns: ['id', 'title', 'status', 'importance', 'urgency'],
+        searchableColumns: ['title', 'description'],
+      },
+    );
   }
 
   @Get('by-time/:period')
@@ -101,5 +107,33 @@ export class TasksController {
     @GetCurrentUser() user: User,
   ): Promise<Task> {
     return this.tasksService.updateStatus(+id, user.id, updateTaskStatusDto);
+  }
+
+  @Get('deleted')
+  async findDeletedTasks(
+    @Paginate() query: PaginateQuery,
+    @Query('status') status: string,
+    @Query('timePeriod') timePeriod: string,
+    @GetCurrentUser() user: User,
+  ) {
+    return paginate(
+      query,
+      this.tasksService.getDeletedTasksQueryBuilder(
+        user.id,
+        status as any,
+        timePeriod as any,
+      ),
+      {
+        sortableColumns: [
+          'id',
+          'title',
+          'status',
+          'importance',
+          'urgency',
+          'updated_at',
+        ],
+        searchableColumns: ['title', 'description'],
+      },
+    );
   }
 }

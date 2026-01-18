@@ -2,7 +2,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { updateGlobalConfig } from 'nestjs-paginate';
-// import { writeFileSync } from 'fs';
+import { writeFile } from 'fs';
 import { AppModule } from './app.module';
 import { loggerMiddleware } from './middleware/logger.middleware';
 import logger from './utils/logger';
@@ -54,7 +54,10 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
 
   // 生成并保存Swagger JSON文档
-  // writeFileSync('./swagger-spec.json', JSON.stringify(document));
+  writeFile('./swagger-spec.json', JSON.stringify(document), (err) => {
+    if (err) throw err;
+    console.log('Swagger 文档已保存！');
+  });
 
   // 生成并保存Swagger YAML文档
   // const yamlDocument = SwaggerModule.createDocument(app, config);

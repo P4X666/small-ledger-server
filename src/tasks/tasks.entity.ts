@@ -58,4 +58,7 @@ export class Task {
   @Expose({ name: 'updatedAt' })
   @UpdateDateColumn()
   updated_at: Date;
+
+  @Column({ type: 'boolean', default: false })
+  isDeleted: boolean;
 }
