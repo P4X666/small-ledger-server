@@ -133,8 +133,47 @@ export class XlsxParser extends ExcelParser {
       const processedRow: any = {};
       Object.keys(row).forEach((key) => {
         // 处理表头，将字母表头转换为有意义的字段名
-        // 这里可以根据实际需求进行更复杂的处理
-        processedRow[key] = row[key];
+        // 映射Excel表格的列与字段的对应关系
+        let fieldName = key;
+        switch (key) {
+          case 'A':
+            fieldName = '交易时间';
+            break;
+          case 'B':
+            fieldName = '交易类型';
+            break;
+          case 'C':
+            fieldName = '交易对方';
+            break;
+          case 'D':
+            fieldName = '商品';
+            break;
+          case 'E':
+            fieldName = '收/支';
+            break;
+          case 'F':
+            fieldName = '金额(元)';
+            break;
+          case 'G':
+            fieldName = '支付方式';
+            break;
+          case 'H':
+            fieldName = '当前状态';
+            break;
+          case 'I':
+            fieldName = '交易单号';
+            break;
+          case 'J':
+            fieldName = '商户单号';
+            break;
+          case 'K':
+            fieldName = '备注';
+            break;
+          // 其他列保持原样
+          default:
+            fieldName = key;
+        }
+        processedRow[fieldName] = row[key];
       });
       return processedRow;
     });

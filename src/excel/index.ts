@@ -16,20 +16,8 @@ import { ExcelService } from './excel.service';
 // 导出控制器
 import { ExcelController } from './excel.controller';
 
-// 导出验证器
-import { ExampleValidator } from './validators/example.validator';
-
 // 导出模块
 import { ExcelModule } from './excel.module';
-
-// 导出示例
-import {
-  runExamples,
-  parseExcelFile,
-  parseCsvFile,
-  validateData,
-  batchParseFiles,
-} from './excel.example';
 
 export {
   // 接口
@@ -48,16 +36,6 @@ export {
   // 控制器
   ExcelController,
 
-  // 验证器
-  ExampleValidator,
-
   // 模块
   ExcelModule,
-
-  // 示例
-  runExamples,
-  parseExcelFile,
-  parseCsvFile,
-  validateData,
-  batchParseFiles,
 };

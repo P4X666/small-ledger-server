@@ -11,6 +11,7 @@ import { ExcelService } from './excel.service';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { FileTypeUtils } from './file-type-utils';
 
 @Controller('excel')
 export class ExcelController {
@@ -66,53 +67,40 @@ export class ExcelController {
 
         // 从Content-Disposition头中提取文件名
         let originalname = 'uploaded-file';
-        let fileExt = '';
 
         if (contentDisposition) {
           const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
           if (filenameMatch && filenameMatch[1]) {
             originalname = filenameMatch[1];
-            fileExt = extname(originalname);
           }
         }
 
-        // 如果没有文件名，根据Content-Type推断扩展名
-        if (!fileExt) {
-          if (
-            contentType.includes('excel') ||
-            contentType.includes('spreadsheet')
-          ) {
-            fileExt = '.xlsx';
-          } else if (contentType.includes('csv')) {
-            fileExt = '.csv';
-          } else if (
-            contentType.includes('zip') ||
-            contentType.includes('compressed')
-          ) {
-            fileExt = '.zip';
-          } else {
-            // 检查文件内容以确定是否为ZIP文件
-            // ZIP文件的魔数是PK\x03\x04
-            if (
-              buffer.length >= 4 &&
-              buffer[0] === 0x50 &&
-              buffer[1] === 0x4b &&
-              buffer[2] === 0x03 &&
-              buffer[3] === 0x04
-            ) {
-              fileExt = '.zip';
-            } else {
-              // 默认使用.xlsx
-              fileExt = '.xlsx';
-            }
-          }
-          originalname += fileExt;
+        // 确定最终的文件扩展名
+        let finalExt = FileTypeUtils.determineFileExtension(originalname, contentType, buffer);
+
+        // 如果没有扩展名，添加默认扩展名
+        if (!finalExt) {
+          finalExt = '.xlsx';
+          originalname += finalExt;
+        } else if (!originalname.endsWith(finalExt)) {
+          originalname += finalExt;
+        }
+
+        // 特殊处理：确保xlsx文件不会被错误识别为zip文件
+        // 当Content-Type明确表示为Excel文件时，强制使用.xlsx扩展名
+        if (
+          (contentType.includes('excel') ||
+            contentType.includes('spreadsheet') ||
+            contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') &&
+          finalExt === '.zip'
+        ) {
+          finalExt = '.xlsx';
+          originalname = originalname.replace(/\.zip$/i, '.xlsx');
         }
 
         // 验证文件类型
         const allowedExtensions = ['.xlsx', '.xls', '.csv', '.zip'];
-        const ext = extname(originalname).toLowerCase();
-        if (!allowedExtensions.includes(ext)) {
+        if (!allowedExtensions.includes(finalExt.toLowerCase())) {
           return {
             status: 'error',
             message: '不支持的文件类型，仅支持Excel、CSV和ZIP文件',
@@ -124,7 +112,7 @@ export class ExcelController {
           .fill(null)
           .map(() => Math.round(Math.random() * 16).toString(16))
           .join('');
-        const filename = `${randomName}${ext}`;
+        const filename = `${randomName}${finalExt}`;
         const destination = './uploads';
         const path = join(destination, filename);
 
@@ -168,22 +156,74 @@ export class ExcelController {
       const ext = extname(file.originalname).toLowerCase();
       let skipRows = 0;
       if (ext === '.xlsx' || ext === '.xls') {
-        // xlsx格式文件的数据从第16行开始，需要跳过15行
-        // 确保第17行被正确识别为有效数据行
-        skipRows = 15;
+        // xlsx格式文件的数据从第15行开始，需要跳过14行
+        // 确保第15行被正确识别为表头行，第16行开始为有效数据行
+        skipRows = 14;
       } else if (ext === '.csv') {
         // csv格式文件的数据从第5行开始，需要跳过4行
         skipRows = 4;
       } else if (ext === '.zip') {
-        // zip文件中的CSV文件数据从第5行开始，需要跳过4行
-        skipRows = 4;
+        // zip文件中的CSV文件数据从第4行开始，需要跳过3行
+        skipRows = 3;
+      }
+
+      // 解析文件前再次验证文件类型和扩展名的一致性
+      try {
+        // 尝试验证文件是否为有效的Excel文件
+        // 只有当文件的原始扩展名是.xlsx或.xls时，才尝试使用Excel解析器验证文件
+        // 这样可以确保zip格式文件上传后保持zip格式不变
+        const originalExt = extname(file.originalname).toLowerCase();
+        const currentExt = extname(file.filename).toLowerCase();
+        
+        // 只有当文件的原始扩展名是.xlsx或.xls时，才尝试使用Excel解析器验证文件
+        if (['.xlsx', '.xls'].includes(originalExt)) {
+          // 尝试用Excel解析器解析
+          const xlsxParser = require('./xlsx.parser').XlsxParser;
+          const parser = new xlsxParser();
+          const isExcelFile = await parser.validateFormat(file.path);
+          
+          // 如果是有效的Excel文件但扩展名不是.xlsx或.xls，修正扩展名
+          if (isExcelFile && !['.xlsx', '.xls'].includes(currentExt)) {
+            // 重命名文件为.xlsx扩展名
+            const newFilename = file.filename.replace(currentExt, '.xlsx');
+            const newPath = join(file.destination, newFilename);
+            const fs = require('fs');
+            if (fs.existsSync(file.path)) {
+              fs.renameSync(file.path, newPath);
+              // 更新file对象
+              file.filename = newFilename;
+              file.path = newPath;
+            }
+          }
+        }
+        // 对于zip文件，保持其原始格式不变
+        else if (originalExt === '.zip' && currentExt !== '.zip') {
+          // 确保zip文件使用正确的扩展名
+          const newFilename = file.filename.replace(currentExt, '.zip');
+          const newPath = join(file.destination, newFilename);
+          const fs = require('fs');
+          if (fs.existsSync(file.path)) {
+            fs.renameSync(file.path, newPath);
+            // 更新file对象
+            file.filename = newFilename;
+            file.path = newPath;
+          }
+        }
+      } catch (error) {
+        // 验证失败不影响后续处理，继续尝试解析
+        console.log('文件类型验证失败，继续尝试解析:', error.message);
       }
 
       // 解析文件
+      console.log('开始解析文件:', file.path);
       const parsedData = await this.excelService.parse(file.path, { skipRows });
+      console.log('文件解析完成，解析了', parsedData.totalRows, '行数据');
+      console.log('解析的数据示例:', parsedData.data.slice(0, 2));
 
       // 分类数据
+      console.log('开始分类数据...');
       const categorizedData = this.categorizeTransactions(parsedData.data);
+      console.log('数据分类完成，收入:', categorizedData.income.length, '条，支出:', categorizedData.expense.length, '条，中性:', categorizedData.neutral.length, '条');
 
       // 导出到bill.json
       const outputPath = join(process.cwd(), 'bill.json');

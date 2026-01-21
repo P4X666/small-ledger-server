@@ -123,6 +123,10 @@ export class CsvParser extends ExcelParser {
     options: ExcelParserOptions = {},
   ): Promise<ExcelParseResult> {
     const startTime = Date.now();
+    console.log('开始解析CSV文件:', filePath);
+    console.log('使用编码:', encoding);
+    console.log('使用分隔符:', delimiter);
+    console.log('跳过行数:', options.skipRows || 0);
 
     return new Promise<ExcelParseResult>((resolve, reject) => {
       const results: any[] = [];
@@ -132,11 +136,13 @@ export class CsvParser extends ExcelParser {
       let batchBuffer: any[] = [];
 
       try {
+        console.log('创建文件流...');
         const iconv = require('iconv-lite');
         const stream = createReadStream(filePath);
 
         // 转换编码的转换流
         const decodeStream = iconv.decodeStream(encoding);
+        console.log('文件流创建完成');
 
         stream
           .pipe(decodeStream)
@@ -147,12 +153,14 @@ export class CsvParser extends ExcelParser {
               strict: true,
             }),
           )
-          .on('headers', () => {
+          .on('headers', (headers: string[]) => {
+            console.log('CSV文件表头:', headers);
             headerProcessed = true;
           })
           .on('data', (data: any) => {
             // 跳过指定行数
             if (skipCount > 0) {
+              console.log(`跳过第 ${(options.skipRows || 0) - skipCount + 1} 行`);
               skipCount--;
               return;
             }
@@ -174,6 +182,9 @@ export class CsvParser extends ExcelParser {
             }
           })
           .on('end', () => {
+            console.log('CSV文件解析完成');
+            console.log('解析行数:', totalRows);
+            console.log('表头处理:', headerProcessed);
             const endTime = Date.now();
 
             // 处理最后一批数据
@@ -189,10 +200,13 @@ export class CsvParser extends ExcelParser {
             });
           })
           .on('error', (error: Error) => {
-            console.warn(`解析CSV文件失败: ${error.message}`);
+            console.error(`解析CSV文件失败: ${error.message}`);
+            console.error(error.stack);
             reject(new Error(`解析CSV文件失败: ${error.message}`));
           });
       } catch (error) {
+        console.error(`初始化解析器失败: ${(error as Error).message}`);
+        console.error(error.stack);
         reject(new Error(`初始化解析器失败: ${(error as Error).message}`));
       }
     });
