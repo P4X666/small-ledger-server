@@ -84,7 +84,7 @@ describe('ExcelService', () => {
       expect(result).toBeDefined();
       expect(result.fileType).toBe('csv');
       expect(result.data).toHaveLength(2);
-      expect(result.totalRows).toBe(3); // 2 data rows + 1 header
+      expect(result.totalRows).toBe(2); // only data rows, not including header
     });
 
     it('should throw error when zip file contains no CSV files', async () => {

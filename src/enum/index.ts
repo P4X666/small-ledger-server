@@ -15,3 +15,8 @@ export enum TaskTimePeriod {
   Month = 'month',
   Year = 'year',
 }
+
+export enum PayType {
+  Alipay = 'alipay',
+  WechatPay = 'wechat_pay',
+}

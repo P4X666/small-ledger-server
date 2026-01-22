@@ -1,16 +1,29 @@
+import { statSync } from 'fs';
 import * as XLSX from 'xlsx';
-import { statSync, readFileSync } from 'fs';
-import chardet from 'chardet';
 import {
   ExcelParser,
   ExcelParserOptions,
   ExcelParseResult,
 } from './excel.interface';
+import { cleanData } from '../utils/data-cleaner';
 
 export class XlsxParser extends ExcelParser {
   get supportedExtensions(): string[] {
-    return ['.xlsx', '.xls'];
+    return ['.xlsx'];
   }
+
+  // 正则预编译（与CSV解析器保持一致）
+  private static readonly REGEX_CONTROL_CHARS =
+    /[\x00-\x1F\x7F\u200B-\u200D\uFEFF]/g;
+  private static readonly REGEX_GARBLED = /[\ufffd]/g;
+  private static readonly REGEX_VALID_CHARS = /[\u4e00-\u9fa5a-zA-Z0-9]/;
+  private static readonly REGEX_VALID_CHARS_MULTIPLE =
+    /[\u4e00-\u9fa5a-zA-Z0-9]{2,}/;
+  private static readonly REGEX_AMOUNT_CLEAN = /[\x00-\x1F\x7F]/g;
+
+  // 配置化常量（与CSV解析器保持一致）
+  private readonly amountFieldKeywords = ['金额'];
+  private readonly batchSize = 1000; // 分批处理大小
 
   async parse(
     filePath: string,
@@ -19,163 +32,151 @@ export class XlsxParser extends ExcelParser {
     const startTime = Date.now();
 
     // 验证文件存在
-    if (!statSync(filePath, { throwIfNoEntry: false })) {
+    try {
+      statSync(filePath);
+    } catch {
       throw new Error(`文件不存在: ${filePath}`);
     }
 
-    try {
-      // 读取文件内容
-      const buffer = readFileSync(filePath);
+    // 读取XLSX文件
+    const workbook = XLSX.readFile(filePath);
 
-      // 解析Excel文件
-      const workbook = XLSX.read(buffer, {
-        type: 'buffer',
-        cellDates: true,
-        cellNF: false,
-        cellText: false,
-      });
+    // 获取工作表（支持指定sheetName或使用第一个工作表）
+    const sheetName = options.sheetName || workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
 
-      // 选择工作表
-      const sheetName = options.sheetName || workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-
-      if (!worksheet) {
-        throw new Error(`工作表不存在: ${sheetName}`);
-      }
-
-      // 解析数据
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-        header: options.skipHeader ? 1 : 'A',
-        defval: '',
-      });
-
-      // 处理数据格式
-      let data = options.skipHeader
-        ? jsonData
-        : this.processHeaderData(jsonData);
-
-      // 清理数据中的乱码
-      data = this.cleanData(data);
-
-      // 跳过指定行数
-      if (options.skipRows && options.skipRows > 0) {
-        data = data.slice(options.skipRows);
-      }
-
-      const endTime = Date.now();
-
-      return {
-        data,
-        fileType: 'xlsx',
-        totalRows: jsonData.length + (options.skipHeader ? 0 : 1),
-        parseTime: endTime - startTime,
-      };
-    } catch (error) {
-      throw new Error(`解析Excel文件失败: ${(error as Error).message}`);
+    if (!worksheet) {
+      throw new Error(`工作表不存在: ${sheetName}`);
     }
+
+    // 转换为JSON格式，获取所有数据行
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      header: 1, // 获取原始数据数组
+      range: 0, // 从第0行开始
+      raw: false, // 保持原始类型
+    });
+
+    // 跳过指定行数
+    const skipRows = options.skipRows || 0;
+    const dataAfterSkip = jsonData.slice(skipRows);
+
+    // 确保有足够的行
+    if (dataAfterSkip.length === 0) {
+      return {
+        data: [],
+        fileType: 'xlsx',
+        totalRows: 0,
+        parseTime: Date.now() - startTime,
+      };
+    }
+
+    const results: any[] = [];
+    let totalRows = 0;
+    let batchBuffer: any[] = [];
+
+    const headers = dataAfterSkip[0];
+
+    const dataStartIndex = 1;
+
+    // 处理数据行
+    for (let i = dataStartIndex; i < dataAfterSkip.length; i++) {
+      const line = dataAfterSkip[i];
+      
+      // 跳过非数组行（可能是转换错误）
+      if (!Array.isArray(line)) {
+        continue;
+      }
+      
+      // 跳过空行
+      if (line.every((cell: any) => !cell || cell === '')) {
+        continue;
+      }
+      
+      // 确保行数据有足够的列
+      if (line.length < (headers as string[]).length) {
+        continue;
+      }
+      
+      // 构建数据对象
+      const data: any = {};
+      (headers as string[]).forEach((header, headerIndex) => {
+        const value = line[headerIndex];
+        data[header] = value !== undefined && value !== null ? value : '';
+      });
+
+      // 跳过无效数据行（如只有表头重复的行）
+      if (Object.values(data).every((value: any) => !value || value === '')) {
+        continue;
+      }
+
+      // 清理数据
+      const cleanedData = this.cleanData(data);
+      results.push(cleanedData);
+      batchBuffer.push(cleanedData);
+      totalRows++;
+
+      // 分批处理
+      if (batchBuffer.length >= this.batchSize) {
+        // 触发分批回调
+        if (options.batchCallback) {
+          options.batchCallback(batchBuffer);
+        }
+        // 清空缓冲区释放内存
+        batchBuffer = [];
+      }
+    }
+
+    // 处理最后一批数据
+    if (batchBuffer.length > 0 && options.batchCallback) {
+      options.batchCallback(batchBuffer);
+    }
+
+    return {
+      data: results,
+      fileType: 'xlsx',
+      totalRows: totalRows, // 只计算数据行数
+      parseTime: Date.now() - startTime,
+    };
   }
 
   /**
    * 清理数据中的乱码
    */
-  private cleanData(data: any[]): any[] {
-    return data.map((item) => {
-      if (Array.isArray(item)) {
-        return item.map((value) => this.cleanValue(value));
-      } else if (typeof item === 'object' && item !== null) {
-        const cleanedItem: any = {};
-        for (const key in item) {
-          if (Object.prototype.hasOwnProperty.call(item, key)) {
-            cleanedItem[key] = this.cleanValue(item[key]);
-          }
-        }
-        return cleanedItem;
-      }
-      return item;
-    });
-  }
+  private cleanData(data: any): any {
+    const cleanedData = cleanData(data, this.amountFieldKeywords);
 
-  /**
-   * 清理单个值
-   */
-  private cleanValue(value: any): any {
-    if (typeof value === 'string') {
-      // 移除控制字符
-      let cleaned = value.replace(/[\x00-\x1F\x7F]/g, '');
-      // 移除零宽度字符
-      cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, '');
-      // 清理乱码（无效UTF-8字符）
-      cleaned = cleaned.replace(/[\ufffd]/g, '');
-      // 清理多余空格
-      cleaned = cleaned.trim();
-      return cleaned;
+    // 确保备注字段在无数据时默认填充为"/"
+    if (!cleanedData['备注'] || cleanedData['备注'] === '') {
+      cleanedData['备注'] = '/';
     }
-    return value;
+
+    return cleanedData;
   }
 
   async validateFormat(filePath: string): Promise<boolean> {
     try {
       // 验证文件存在
-      if (!statSync(filePath, { throwIfNoEntry: false })) {
-        return false;
-      }
+      statSync(filePath);
 
       // 尝试读取文件
       const workbook = XLSX.readFile(filePath);
-      return workbook.SheetNames.length > 0;
+
+      // 检查是否有工作表
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        return false;
+      }
+
+      // 检查第一个工作表是否有数据
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        range: 0,
+        raw: false,
+      });
+
+      return Array.isArray(jsonData) && jsonData.length > 0;
     } catch {
       return false;
     }
-  }
-
-  private processHeaderData(data: any[]): any[] {
-    return data.map((row: any) => {
-      const processedRow: any = {};
-      Object.keys(row).forEach((key) => {
-        // 处理表头，将字母表头转换为有意义的字段名
-        // 映射Excel表格的列与字段的对应关系
-        let fieldName = key;
-        switch (key) {
-          case 'A':
-            fieldName = '交易时间';
-            break;
-          case 'B':
-            fieldName = '交易类型';
-            break;
-          case 'C':
-            fieldName = '交易对方';
-            break;
-          case 'D':
-            fieldName = '商品';
-            break;
-          case 'E':
-            fieldName = '收/支';
-            break;
-          case 'F':
-            fieldName = '金额(元)';
-            break;
-          case 'G':
-            fieldName = '支付方式';
-            break;
-          case 'H':
-            fieldName = '当前状态';
-            break;
-          case 'I':
-            fieldName = '交易单号';
-            break;
-          case 'J':
-            fieldName = '商户单号';
-            break;
-          case 'K':
-            fieldName = '备注';
-            break;
-          // 其他列保持原样
-          default:
-            fieldName = key;
-        }
-        processedRow[fieldName] = row[key];
-      });
-      return processedRow;
-    });
   }
 }

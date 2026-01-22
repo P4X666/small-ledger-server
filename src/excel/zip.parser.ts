@@ -1,4 +1,4 @@
-import { unlinkSync, writeFileSync, readdirSync, rmSync } from 'fs';
+import { readdirSync, rmSync } from 'fs';
 import { join, extname } from 'path';
 import AdmZip from 'adm-zip';
 import {
@@ -21,22 +21,14 @@ export class ZipParser extends ExcelParser {
     let tempDir: string | undefined;
 
     try {
-      console.log('开始解析ZIP文件:', filePath);
-      
       // 创建临时目录用于存放解压后的文件
       tempDir = join(__dirname, `temp_${Date.now()}`);
-      console.log('创建临时目录:', tempDir);
-
       // 解压zip文件
-      console.log('开始解压ZIP文件...');
       const zip = new AdmZip(filePath);
       zip.extractAllTo(tempDir, true);
-      console.log('ZIP文件解压完成');
 
       // 查找CSV文件
-      console.log('开始查找CSV文件...');
       const csvFiles = this.findCsvFiles(tempDir);
-      console.log(`找到 ${csvFiles.length} 个CSV文件`);
 
       if (csvFiles.length === 0) {
         throw new Error(
@@ -49,14 +41,9 @@ export class ZipParser extends ExcelParser {
           'ZIP文件中包含多个CSV文件，仅支持单个CSV文件，请确保压缩包中只包含一个账单文件',
         );
       }
-
-      console.log('找到的CSV文件:', csvFiles[0]);
-
       // 使用CsvParser解析CSV文件
-      console.log('开始解析CSV文件...');
       const csvParser = new CsvParser();
       const result = await csvParser.parse(csvFiles[0], options);
-      console.log('CSV文件解析完成');
 
       return {
         ...result,
@@ -71,9 +58,7 @@ export class ZipParser extends ExcelParser {
       // 清理临时文件
       if (tempDir) {
         try {
-          console.log('清理临时目录:', tempDir);
           rmSync(tempDir, { recursive: true, force: true });
-          console.log('临时目录清理完成');
         } catch (cleanupError) {
           console.warn('清理临时文件失败:', cleanupError.message);
         }

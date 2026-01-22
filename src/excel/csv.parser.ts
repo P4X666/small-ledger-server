@@ -1,10 +1,10 @@
-import csvParser from 'csv-parser';
 import { createReadStream, statSync } from 'fs';
 import {
   ExcelParser,
   ExcelParserOptions,
   ExcelParseResult,
 } from './excel.interface';
+import { cleanData } from '../utils/data-cleaner';
 
 export class CsvParser extends ExcelParser {
   get supportedExtensions(): string[] {
@@ -25,7 +25,7 @@ export class CsvParser extends ExcelParser {
   private encodingCache = new Map<string, string>();
 
   // 配置化常量
-  private readonly amountFieldKeywords = ['amount', '金额', 'amt', '_9'];
+  private readonly amountFieldKeywords = ['金额'];
   private readonly delimiters = [',', ';', '\t', '|'];
   private readonly batchSize = 1000; // 分批处理大小
 
@@ -42,78 +42,33 @@ export class CsvParser extends ExcelParser {
       throw new Error(`文件不存在: ${filePath}`);
     }
 
-    return new Promise<ExcelParseResult>((resolve, reject) => {
+    // 读取文件头部进行编码和分隔符检测
+    const headerBuffer = Buffer.alloc(1024);
+    const fs = require('fs');
+    const fd = fs.openSync(filePath, 'r');
+    fs.readSync(fd, headerBuffer, 0, 1024, 0);
+    fs.closeSync(fd);
 
-      try {
-        // 异步流式读取文件
-        const stream = createReadStream(filePath, { highWaterMark: 64 * 1024 });
+    // 检测编码
+    const encoding = this.detectFileEncoding(filePath, headerBuffer);
+    // 解码头部内容用于检测分隔符
+    const iconv = require('iconv-lite');
+    const headerContent = iconv
+      .decode(headerBuffer, encoding)
+      .replace(/^\ufeff/, '');
+    const delimiter = this.detectCsvDelimiter(headerContent);
 
-        // 读取文件头部用于编码检测
-        let headerBuffer: Buffer = Buffer.alloc(0);
-        let encoding: string = 'utf8';
-        let delimiter: string = ',';
-        let encodingDetected = false;
-
-        stream
-          .on('data', (chunk: Buffer) => {
-            if (!encodingDetected) {
-              headerBuffer = Buffer.concat([headerBuffer, chunk]);
-              if (headerBuffer.length >= 1024) {
-                // 检测编码
-                encoding = this.detectFileEncoding(filePath, headerBuffer);
-                // 解码头部内容用于检测分隔符
-                const iconv = require('iconv-lite');
-                const headerContent = iconv
-                  .decode(headerBuffer, encoding)
-                  .replace(/^\ufeff/, '');
-                delimiter = this.detectCsvDelimiter(headerContent);
-                encodingDetected = true;
-              }
-            }
-          })
-          .on('end', () => {
-            // 如果文件很小，在end事件中检测编码
-            if (!encodingDetected) {
-              encoding = this.detectFileEncoding(filePath, headerBuffer);
-              const iconv = require('iconv-lite');
-              const headerContent = iconv
-                .decode(headerBuffer, encoding)
-                .replace(/^\ufeff/, '');
-              delimiter = this.detectCsvDelimiter(headerContent);
-              encodingDetected = true;
-
-              // 重新创建流进行解析
-              this.parseWithEncoding(filePath, encoding, delimiter, options)
-                .then((result) => {
-                  const endTime = Date.now();
-                  resolve({
-                    ...result,
-                    parseTime: endTime - startTime,
-                  });
-                })
-                .catch(reject);
-            }
-          })
-          .on('error', (error: Error) => {
-            reject(new Error(`读取文件失败: ${error.message}`));
-          });
-
-        // 如果编码已经检测完成，直接解析
-        if (encodingDetected) {
-          this.parseWithEncoding(filePath, encoding, delimiter, options)
-            .then((result) => {
-              const endTime = Date.now();
-              resolve({
-                ...result,
-                parseTime: endTime - startTime,
-              });
-            })
-            .catch(reject);
-        }
-      } catch (error) {
-        reject(new Error(`初始化解析器失败: ${(error as Error).message}`));
-      }
-    });
+    // 直接使用检测到的编码和分隔符进行解析
+    const result = await this.parseWithEncoding(
+      filePath,
+      encoding,
+      delimiter,
+      options,
+    );
+    return {
+      ...result,
+      parseTime: Date.now() - startTime,
+    };
   }
 
   private async parseWithEncoding(
@@ -123,90 +78,119 @@ export class CsvParser extends ExcelParser {
     options: ExcelParserOptions = {},
   ): Promise<ExcelParseResult> {
     const startTime = Date.now();
-    console.log('开始解析CSV文件:', filePath);
-    console.log('使用编码:', encoding);
-    console.log('使用分隔符:', delimiter);
-    console.log('跳过行数:', options.skipRows || 0);
 
     return new Promise<ExcelParseResult>((resolve, reject) => {
       const results: any[] = [];
       let totalRows = 0;
-      let headerProcessed = false;
-      let skipCount = options.skipRows || 0;
       let batchBuffer: any[] = [];
+      const skipRows = options.skipRows || 0;
+      let headers: string[] = [];
 
       try {
-        console.log('创建文件流...');
         const iconv = require('iconv-lite');
-        const stream = createReadStream(filePath);
+        const stream = createReadStream(filePath, {
+          highWaterMark: 128 * 1024,
+        });
 
         // 转换编码的转换流
         const decodeStream = iconv.decodeStream(encoding);
-        console.log('文件流创建完成');
+
+        // 读取原始文件内容，手动处理行跳过和表头提取
+        let rawContent = '';
 
         stream
           .pipe(decodeStream)
-          .pipe(
-            csvParser({
-              separator: delimiter,
-              skipLines: 0,
-              strict: true,
-            }),
-          )
-          .on('headers', (headers: string[]) => {
-            console.log('CSV文件表头:', headers);
-            headerProcessed = true;
+          .on('data', (chunk: string) => {
+            rawContent += chunk;
           })
-          .on('data', (data: any) => {
+          .on('end', () => {
+            // 分割行
+            const lines = rawContent.split('\n');
+
             // 跳过指定行数
-            if (skipCount > 0) {
-              console.log(`跳过第 ${(options.skipRows || 0) - skipCount + 1} 行`);
-              skipCount--;
+            const linesAfterSkip = lines.slice(skipRows);
+
+            // 确保有足够的行
+            if (linesAfterSkip.length === 0) {
+              resolve({
+                data: [],
+                fileType: 'csv',
+                totalRows: 0,
+                parseTime: Date.now() - startTime,
+              });
               return;
             }
 
-            // 清理数据中的乱码
-            const cleanedData = this.cleanData(data);
-            results.push(cleanedData);
-            batchBuffer.push(cleanedData);
-            totalRows++;
+            // 提取表头行
+            const headerLine = linesAfterSkip[0];
+            headers = headerLine
+              .split(delimiter)
+              .map((header) => header.trim());
 
-            // 分批处理
-            if (batchBuffer.length >= this.batchSize) {
-              // 触发分批回调
-              if (options.batchCallback) {
-                options.batchCallback(batchBuffer);
+            // 数据行
+            const dataLines = linesAfterSkip.slice(1);
+
+            console.log(`数据行数量: ${dataLines.length}`);
+
+            // 处理数据行
+            for (const line of dataLines) {
+              // 跳过空行
+              if (!line.trim()) {
+                break;
               }
-              // 清空缓冲区释放内存
-              batchBuffer = [];
+              // 分割数据
+              const values = line.split(delimiter).map((value) => value.trim());
+
+              // 确保值的数量与表头数量匹配
+              if (values.length !== headers.length) {
+                // 跳过格式异常的行
+                break;
+              }
+              // 结束标志
+              if (values[0].includes('-------------------------------')) {
+                break;
+              }
+
+              // 构建数据对象
+              const data: any = {};
+              headers.forEach((header, headerIndex) => {
+                data[header] = values[headerIndex];
+              });
+
+              // 清理数据中的乱码
+              const cleanedData = this.cleanData(data);
+              results.push(cleanedData);
+              batchBuffer.push(cleanedData);
+              totalRows++;
+
+              // 分批处理
+              if (batchBuffer.length >= this.batchSize) {
+                // 触发分批回调
+                if (options.batchCallback) {
+                  options.batchCallback(batchBuffer);
+                }
+                // 清空缓冲区释放内存
+                batchBuffer = [];
+              }
             }
-          })
-          .on('end', () => {
-            console.log('CSV文件解析完成');
-            console.log('解析行数:', totalRows);
-            console.log('表头处理:', headerProcessed);
-            const endTime = Date.now();
+
+            console.log(`处理完成 ${totalRows} 条记录`);
 
             // 处理最后一批数据
             if (batchBuffer.length > 0 && options.batchCallback) {
               options.batchCallback(batchBuffer);
             }
-
             resolve({
               data: results,
               fileType: 'csv',
-              totalRows: totalRows + (headerProcessed ? 1 : 0), // 包括表头
-              parseTime: endTime - startTime,
+              totalRows: totalRows, // 只计算数据行数
+              parseTime: Date.now() - startTime,
             });
           })
           .on('error', (error: Error) => {
-            console.error(`解析CSV文件失败: ${error.message}`);
-            console.error(error.stack);
             reject(new Error(`解析CSV文件失败: ${error.message}`));
           });
       } catch (error) {
-        console.error(`初始化解析器失败: ${(error as Error).message}`);
-        console.error(error.stack);
         reject(new Error(`初始化解析器失败: ${(error as Error).message}`));
       }
     });
@@ -231,7 +215,9 @@ export class CsvParser extends ExcelParser {
       try {
         const utf8Decoded = buffer.toString('utf8');
         if (this.isValidCsvContent(utf8Decoded)) {
-          const garbledCount = (utf8Decoded.match(CsvParser.REGEX_GARBLED) || []).length;
+          const garbledCount = (
+            utf8Decoded.match(CsvParser.REGEX_GARBLED) || []
+          ).length;
           if (garbledCount === 0) {
             detectedEncoding = 'utf8';
           } else {
@@ -262,53 +248,7 @@ export class CsvParser extends ExcelParser {
    * 清理数据中的乱码
    */
   private cleanData(data: any): any {
-    const cleanedData: any = {};
-
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        let value = data[key];
-        if (typeof value === 'string') {
-          // 仅非金额字段清理乱码
-          if (!this.isAmountField(key)) {
-            value = this.cleanString(value);
-          }
-          // 通用清理：控制字符（金额字段也需要）
-          value = value.replace(CsvParser.REGEX_AMOUNT_CLEAN, '');
-        }
-        cleanedData[key] = value;
-      }
-    }
-    return cleanedData;
-  }
-
-  /**
-   * 清理字符串中的乱码
-   */
-  private cleanString(str: string): string {
-    // 1. 基础清理：控制字符、零宽度字符
-    let cleaned = str.replace(CsvParser.REGEX_CONTROL_CHARS, '').trim();
-
-    // 2. 空值处理
-    if (!cleaned) return '';
-
-    // 3. 乱码字符清理（仅移除乱码，保留其他字符）
-    cleaned = cleaned.replace(CsvParser.REGEX_GARBLED, '');
-
-    // 4. 合理短内容保留（如"123-"、"AB&C"）
-    if (cleaned.length < 5) {
-      // 仅当无有效字符时替换
-      if (!CsvParser.REGEX_VALID_CHARS.test(cleaned)) {
-        return '';
-      }
-      return cleaned;
-    }
-
-    // 5. 保留合法内容（中文/字母数字/常见符号）
-    if (CsvParser.REGEX_VALID_CHARS_MULTIPLE.test(cleaned)) {
-      return cleaned;
-    }
-
-    return '';
+    return cleanData(data, this.amountFieldKeywords);
   }
 
   /**

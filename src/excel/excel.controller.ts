@@ -12,6 +12,7 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { FileTypeUtils } from './file-type-utils';
+import { PayType } from 'src/enum';
 
 @Controller('excel')
 export class ExcelController {
@@ -76,7 +77,11 @@ export class ExcelController {
         }
 
         // 确定最终的文件扩展名
-        let finalExt = FileTypeUtils.determineFileExtension(originalname, contentType, buffer);
+        let finalExt = FileTypeUtils.determineFileExtension(
+          originalname,
+          contentType,
+          buffer,
+        );
 
         // 如果没有扩展名，添加默认扩展名
         if (!finalExt) {
@@ -91,7 +96,8 @@ export class ExcelController {
         if (
           (contentType.includes('excel') ||
             contentType.includes('spreadsheet') ||
-            contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') &&
+            contentType ===
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') &&
           finalExt === '.zip'
         ) {
           finalExt = '.xlsx';
@@ -155,16 +161,18 @@ export class ExcelController {
       // 根据文件类型设置跳过行数
       const ext = extname(file.originalname).toLowerCase();
       let skipRows = 0;
+      let payType: PayType = PayType.Alipay;
       if (ext === '.xlsx' || ext === '.xls') {
-        // xlsx格式文件的数据从第15行开始，需要跳过14行
-        // 确保第15行被正确识别为表头行，第16行开始为有效数据行
-        skipRows = 14;
-      } else if (ext === '.csv') {
-        // csv格式文件的数据从第5行开始，需要跳过4行
+        // xlsx格式文件的数据从第16行开始
+        // 确保第16行被正确识别为表头行，第16行开始为有效数据行
+        skipRows = 16;
+        payType = PayType.WechatPay;
+      } else if (ext === '.csv' || ext === '.zip') {
+        // CSV文件和ZIP中的CSV文件数据从第4行开始
+        // 确保第4行被正确识别为表头行，第5行开始为有效数据行
         skipRows = 4;
-      } else if (ext === '.zip') {
-        // zip文件中的CSV文件数据从第4行开始，需要跳过3行
-        skipRows = 3;
+        // 支付宝支付账单通常是zip文件解压后是csv格式，第4行是表头，第5行开始为有效数据行
+        payType = PayType.Alipay;
       }
 
       // 解析文件前再次验证文件类型和扩展名的一致性
@@ -174,14 +182,14 @@ export class ExcelController {
         // 这样可以确保zip格式文件上传后保持zip格式不变
         const originalExt = extname(file.originalname).toLowerCase();
         const currentExt = extname(file.filename).toLowerCase();
-        
+
         // 只有当文件的原始扩展名是.xlsx或.xls时，才尝试使用Excel解析器验证文件
         if (['.xlsx', '.xls'].includes(originalExt)) {
           // 尝试用Excel解析器解析
           const xlsxParser = require('./xlsx.parser').XlsxParser;
           const parser = new xlsxParser();
           const isExcelFile = await parser.validateFormat(file.path);
-          
+
           // 如果是有效的Excel文件但扩展名不是.xlsx或.xls，修正扩展名
           if (isExcelFile && !['.xlsx', '.xls'].includes(currentExt)) {
             // 重命名文件为.xlsx扩展名
@@ -215,15 +223,13 @@ export class ExcelController {
       }
 
       // 解析文件
-      console.log('开始解析文件:', file.path);
       const parsedData = await this.excelService.parse(file.path, { skipRows });
-      console.log('文件解析完成，解析了', parsedData.totalRows, '行数据');
-      console.log('解析的数据示例:', parsedData.data.slice(0, 2));
 
       // 分类数据
-      console.log('开始分类数据...');
-      const categorizedData = this.categorizeTransactions(parsedData.data);
-      console.log('数据分类完成，收入:', categorizedData.income.length, '条，支出:', categorizedData.expense.length, '条，中性:', categorizedData.neutral.length, '条');
+      const categorizedData = this.categorizeTransactions(
+        parsedData.data,
+        payType,
+      );
 
       // 导出到bill.json
       const outputPath = join(process.cwd(), 'bill.json');
@@ -239,7 +245,9 @@ export class ExcelController {
         if (existsSync(outputPath)) {
           const fs = require('fs');
           const existingContent = fs.readFileSync(outputPath, 'utf8');
-          existingData = JSON.parse(existingContent);
+          if (existingContent) {
+            existingData = JSON.parse(existingContent);
+          }
         }
       } catch (error) {
         console.error('读取现有bill.json文件失败:', error.message);
@@ -328,7 +336,10 @@ export class ExcelController {
     }
   }
 
-  private categorizeTransactions(transactions: any[]): {
+  private categorizeTransactions(
+    transactions: any[],
+    payType: PayType,
+  ): {
     income: any[];
     expense: any[];
     neutral: any[];
@@ -337,171 +348,67 @@ export class ExcelController {
     const expense: any[] = [];
     const neutral: any[] = [];
 
-    transactions.forEach((transaction) => {
+    for (const transaction of transactions) {
       // 过滤掉统计信息行和空行
       if (!transaction || Object.keys(transaction).length === 0) {
-        return;
+        continue;
       }
 
-      // 过滤掉文件末尾的统计信息
-      const firstKey = Object.keys(transaction)[0];
-      if (
-        transaction[firstKey] ===
-          '------------------------------------------------------------------------------------' ||
-        (transaction[firstKey].includes('共') &&
-          transaction[firstKey].includes('笔记录')) ||
-        (transaction[firstKey].includes('收入') &&
-          transaction[firstKey].includes('笔')) ||
-        (transaction[firstKey].includes('支出') &&
-          transaction[firstKey].includes('笔')) ||
-        (transaction[firstKey].includes('支付宝') &&
-          transaction[firstKey].includes('笔')) ||
-        (transaction[firstKey].includes('余额宝') &&
-          transaction[firstKey].includes('笔')) ||
-        transaction[firstKey].includes('导出时间') ||
-        transaction[firstKey].includes('用户')
-      ) {
-        return;
-      }
+      // 转换为标准格式
+      const standardizedTransaction = transaction;
 
-      // 专门处理支付宝账单格式
-      // 直接检查字段值，不进行字符串处理
-      const isAlipayPayment =
-        transaction['_10'] !== undefined && transaction['_15'] !== undefined;
+      // 分类逻辑
+      let category = 'neutral';
 
-      // 优先处理支付宝交易
-      if (isAlipayPayment) {
-        // 支付宝交易通常是支出，优先分类
-        expense.push(transaction);
-        return; // 跳过后续分类逻辑
-      }
-
-      // 专门处理微信支付账单格式
-      // 检查是否是微信支付账单（基于字段名和交易类型）
-      const isWechatPayment =
-        transaction['交易类型'] !== undefined &&
-        transaction['收/支'] !== undefined;
-
-      // 优先处理微信支付交易
-      if (isWechatPayment) {
-        // 微信支付交易根据收/支字段分类
-        if (transaction['收/支'] === '收入') {
-          income.push(transaction);
-        } else if (transaction['收/支'] === '支出') {
-          expense.push(transaction);
-        } else {
-          neutral.push(transaction);
-        }
-        return; // 跳过后续分类逻辑
-      }
-
-      // 尝试从常见的收支字段中判断
-      const directionFields = ['收/支', '收支', 'direction', 'E', 'K'];
-      let directionType = '';
-
-      for (const field of directionFields) {
-        if (transaction[field] !== undefined) {
-          directionType = String(transaction[field]);
-          break;
+      // 基于收/支字段分类
+      if (standardizedTransaction['收/支'] !== undefined) {
+        const direction = standardizedTransaction['收/支'];
+        if (direction === '收入') {
+          category = 'income';
+        } else if (direction === '支出') {
+          category = 'expense';
         }
       }
-
-      // 尝试从常见的金额字段中获取金额
-      const amountFields = [
-        '金额',
-        '交易金额',
-        '金额(元)',
-        'amount',
-        'AMOUNT',
-        'F',
-        '_9',
-        'J',
-      ];
-      let amount = 0;
-
-      for (const field of amountFields) {
-        if (transaction[field] !== undefined) {
-          const value = transaction[field];
-          if (typeof value === 'number') {
-            amount = value;
-          } else if (typeof value === 'string') {
-            // 尝试解析字符串为数字
-            const parsed = parseFloat(value.replace(/[^\d.-]/g, ''));
-            if (!isNaN(parsed)) {
-              amount = parsed;
-            }
-          }
-          break;
-        }
-      }
-
-      // 尝试从交易类型字段判断
-      const typeFields = ['交易类型', '类型', 'type', 'TYPE', 'B', 'I'];
-      let transactionType = '';
-
-      for (const field of typeFields) {
-        if (transaction[field] !== undefined) {
-          transactionType = String(transaction[field]).toLowerCase();
-          break;
-        }
-      }
-
-      // 专门处理第I列和第J列的情况
-      if (transaction['I'] !== undefined && transaction['J'] !== undefined) {
-        transactionType = String(transaction['I']).toLowerCase();
-        const value = transaction['J'];
-        if (typeof value === 'number') {
-          amount = value;
-        } else if (typeof value === 'string') {
-          const parsed = parseFloat(value.replace(/[^\d.-]/g, ''));
-          if (!isNaN(parsed)) {
-            amount = parsed;
+      // 基于金额字段分类
+      else if (standardizedTransaction['金额（元）'] !== undefined) {
+        const amountStr = String(standardizedTransaction['金额（元）']);
+        const amount = parseFloat(amountStr.replace(/[^\d.-]/g, ''));
+        if (!isNaN(amount)) {
+          if (amount > 0) {
+            category = 'income';
+          } else if (amount < 0) {
+            category = 'expense';
           }
         }
       }
 
-      // 其他交易的分类逻辑
-      if (
-        directionType === '收入' ||
-        directionType === '收' ||
-        directionType.includes('收入')
-      ) {
-        income.push(transaction);
-      } else if (
-        directionType === '支出' ||
-        directionType === '支' ||
-        directionType.includes('支出') ||
-        directionType.includes('消费') ||
-        directionType.includes('转账') ||
-        directionType.includes('支付')
-      ) {
-        expense.push(transaction);
-      } else if (amount > 0) {
-        income.push(transaction);
-      } else if (amount < 0) {
-        expense.push(transaction);
-      } else {
-        // 金额为0或无法判断时，根据交易类型判断
+      // 支付宝账单默认分类为支出，除非明确为收入
+      if (payType === PayType.Alipay && category === 'neutral') {
+        category = 'expense';
+      }
+
+      // 清理交易对象，只保留有值的字段
+      const cleanedTransaction: any = {};
+      for (const key in standardizedTransaction) {
         if (
-          transactionType.includes('收入') ||
-          transactionType.includes('in') ||
-          transactionType.includes('income')
+          Object.prototype.hasOwnProperty.call(standardizedTransaction, key)
         ) {
-          income.push(transaction);
-        } else if (
-          transactionType.includes('支出') ||
-          transactionType.includes('out') ||
-          transactionType.includes('expense') ||
-          transactionType.includes('消费') ||
-          transactionType.includes('转账') ||
-          transactionType.includes('支付')
-        ) {
-          expense.push(transaction);
-        } else {
-          neutral.push(transaction);
+          const value = standardizedTransaction[key];
+          if (value !== undefined && value !== '' && value !== null) {
+            cleanedTransaction[key] = value;
+          }
         }
       }
-    });
+
+      // 添加到相应分类
+      if (category === 'income') {
+        income.push(cleanedTransaction);
+      } else if (category === 'expense') {
+        expense.push(cleanedTransaction);
+      } else {
+        neutral.push(cleanedTransaction);
+      }
+    }
 
     return {
       income,

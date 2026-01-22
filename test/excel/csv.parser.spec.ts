@@ -40,7 +40,7 @@ describe('CsvParser', () => {
       expect(result).toBeDefined();
       expect(result.fileType).toBe('csv');
       expect(result.data).toHaveLength(2);
-      expect(result.totalRows).toBe(3); // 2 data rows + 1 header
+      expect(result.totalRows).toBe(2); // only data rows, not including header
       expect(result.data[0].name).toBe('测试');
       expect(result.data[1].name).toBe('Test');
     });
@@ -60,7 +60,7 @@ describe('CsvParser', () => {
       expect(result).toBeDefined();
       expect(result.fileType).toBe('csv');
       expect(result.data).toHaveLength(2);
-      expect(result.totalRows).toBe(3);
+      expect(result.totalRows).toBe(2);
       expect(result.data[0].name).toBe('测试');
     });
 
@@ -76,7 +76,7 @@ describe('CsvParser', () => {
       expect(result).toBeDefined();
       expect(result.fileType).toBe('csv');
       expect(result.data).toHaveLength(2);
-      expect(result.totalRows).toBe(3);
+      expect(result.totalRows).toBe(2);
       expect(result.data[0].name).toBe('测试');
     });
 
@@ -92,7 +92,7 @@ describe('CsvParser', () => {
       expect(result).toBeDefined();
       expect(result.fileType).toBe('csv');
       expect(result.data).toHaveLength(2);
-      expect(result.totalRows).toBe(3);
+      expect(result.totalRows).toBe(2);
       expect(result.data[0].name).toBe('测试');
     });
 
@@ -108,7 +108,7 @@ describe('CsvParser', () => {
       expect(result).toBeDefined();
       expect(result.fileType).toBe('csv');
       expect(result.data).toHaveLength(2);
-      expect(result.totalRows).toBe(3);
+      expect(result.totalRows).toBe(2);
       expect(result.data[0].name).toBe('Test');
     });
 
@@ -121,7 +121,7 @@ describe('CsvParser', () => {
 
     it('should handle skipRows option correctly', async () => {
       const csvContent =
-        'header1,header2,header3\nskip1,skip2,skip3\ntest1,test2,test3';
+        'skip1,skip2,skip3\nheader1,header2,header3\ntest1,test2,test3';
       const csvPath = join(testDir, 'skip-rows.csv');
       writeFileSync(csvPath, csvContent, 'utf8');
 
