@@ -4,12 +4,12 @@ import {
   ExcelParser,
   ExcelParserOptions,
   ExcelParseResult,
-} from './excel.interface';
-import { cleanData } from '../utils/data-cleaner';
+} from '../../excel/excel.interface';
+import { cleanData } from './data-cleaner';
 
 export class XlsxParser extends ExcelParser {
   get supportedExtensions(): string[] {
-    return ['.xlsx'];
+    return ['.xlsx', '.xls'];
   }
 
   // 正则预编译（与CSV解析器保持一致）
@@ -81,22 +81,22 @@ export class XlsxParser extends ExcelParser {
     // 处理数据行
     for (let i = dataStartIndex; i < dataAfterSkip.length; i++) {
       const line = dataAfterSkip[i];
-      
+
       // 跳过非数组行（可能是转换错误）
       if (!Array.isArray(line)) {
         continue;
       }
-      
+
       // 跳过空行
       if (line.every((cell: any) => !cell || cell === '')) {
         continue;
       }
-      
+
       // 确保行数据有足够的列
       if (line.length < (headers as string[]).length) {
         continue;
       }
-      
+
       // 构建数据对象
       const data: any = {};
       (headers as string[]).forEach((header, headerIndex) => {

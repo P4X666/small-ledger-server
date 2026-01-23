@@ -1,4 +1,4 @@
-import { FileTypeUtils } from '../../src/excel/file-type-utils';
+import { FileTypeUtils } from '../../src/utils/excel/file-type-utils';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 

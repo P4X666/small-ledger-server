@@ -5,7 +5,7 @@ import {
   ExcelParser,
   ExcelParserOptions,
   ExcelParseResult,
-} from './excel.interface';
+} from '../../excel/excel.interface';
 import { CsvParser } from './csv.parser';
 
 export class ZipParser extends ExcelParser {

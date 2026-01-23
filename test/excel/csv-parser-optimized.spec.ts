@@ -1,4 +1,4 @@
-import { CsvParser } from '../../src/excel/csv.parser';
+import { CsvParser } from '../../src/utils/excel/csv.parser';
 import { writeFileSync, readFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 

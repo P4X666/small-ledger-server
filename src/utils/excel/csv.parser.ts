@@ -3,8 +3,8 @@ import {
   ExcelParser,
   ExcelParserOptions,
   ExcelParseResult,
-} from './excel.interface';
-import { cleanData } from '../utils/data-cleaner';
+} from '../../excel/excel.interface';
+import { cleanData } from './data-cleaner';
 
 export class CsvParser extends ExcelParser {
   get supportedExtensions(): string[] {

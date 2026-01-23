@@ -20,3 +20,9 @@ export enum PayType {
   Alipay = 'alipay',
   WechatPay = 'wechat_pay',
 }
+
+export enum BillCategory {
+  Income = 'income',
+  Expense = 'expense',
+  Neutral = 'neutral'
+}

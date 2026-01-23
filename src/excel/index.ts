@@ -7,8 +7,8 @@ import {
 } from './excel.interface';
 
 // 导出解析器
-import { XlsxParser } from './xlsx.parser';
-import { CsvParser } from './csv.parser';
+import { XlsxParser } from '../utils/excel/xlsx.parser';
+import { CsvParser } from '../utils/excel/csv.parser';
 
 // 导出服务
 import { ExcelService } from './excel.service';

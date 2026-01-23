@@ -1,6 +1,6 @@
 import { ExcelParser } from './excel.interface';
-import { CsvParser } from './csv.parser';
-import { XlsxParser } from './xlsx.parser';
+import { CsvParser } from '../utils/excel/csv.parser';
+import { XlsxParser } from '../utils/excel/xlsx.parser';
 
 export class ExcelParserFactory {
   private static parsers: Map<string, ExcelParser> = new Map();

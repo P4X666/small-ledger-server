@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { extname } from 'path';
 import {
   ExcelParser,
@@ -5,10 +6,11 @@ import {
   ExcelParseResult,
   ExcelValidator,
 } from './excel.interface';
-import { XlsxParser } from './xlsx.parser';
-import { CsvParser } from './csv.parser';
-import { ZipParser } from './zip.parser';
+import { XlsxParser } from '../utils/excel/xlsx.parser';
+import { CsvParser } from '../utils/excel/csv.parser';
+import { ZipParser } from '../utils/excel/zip.parser';
 
+@Injectable()
 export class ExcelService {
   private parsers: ExcelParser[] = [];
 
@@ -58,6 +60,9 @@ export class ExcelService {
     }
 
     // 解析文件
+    if (!parser.parse) {
+      throw new Error(`解析器缺少parse方法: ${parser.constructor.name}`);
+    }
     return parser.parse(filePath, options);
   }
 

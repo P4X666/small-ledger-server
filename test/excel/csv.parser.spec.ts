@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CsvParser } from '../../src/excel/csv.parser';
+import { CsvParser } from '../../src/utils/excel/csv.parser';
 import { writeFileSync, unlinkSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import iconv from 'iconv-lite';

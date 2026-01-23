@@ -20,11 +20,14 @@ export class FileTypeUtils {
         header === '504b0708'
       ) {
         // 是ZIP文件
-        // 简化Excel文件检查：只检查缓冲区中是否包含'xl/'字符串
-        // 这是一个更简单可靠的检查方法，因为xlsx文件必然包含xl/目录
-        const bufferStr = buffer.toString('utf8');
-        if (bufferStr.includes('xl/') || bufferStr.includes('XL/')) {
-          return '.xlsx';
+        // 检查是否为Excel文件：使用更可靠的方法检测'xl/'字符串
+        // 遍历缓冲区，查找'xl/'或'XL/'字符串
+        // 循环条件修正：i < buffer.length - 2，因为我们需要检查3个字符的长度
+        for (let i = 0; i < buffer.length - 2; i++) {
+          const chunk = buffer.slice(i, i + 3).toString('ascii');
+          if (chunk === 'xl/' || chunk === 'XL/') {
+            return '.xlsx';
+          }
         }
         return '.zip';
       }
