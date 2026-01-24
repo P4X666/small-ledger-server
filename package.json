@@ -41,6 +41,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "csv-parser": "^3.2.0",
+    "dayjs": "^1.11.19",
     "fs-extra": "^11.3.3",
     "iconv-lite": "^0.7.2",
     "js-yaml": "^4.1.1",
@@ -98,7 +99,10 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/../src/$1"
+    }
   },
   "lint-staged": {
     "*.ts": [

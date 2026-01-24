@@ -5,6 +5,8 @@ import {
   UseInterceptors,
   Req,
   Headers,
+  UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ExcelService } from './excel.service';
@@ -12,8 +14,12 @@ import { UploadFileService } from './upload-file.service';
 import { BillService } from './bill.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { GetCurrentUser } from '../auth/get-current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { User } from '../users/users.entity';
 
 @Controller('excel')
+@UseGuards(JwtAuthGuard)
 export class ExcelController {
   constructor(
     private readonly excelService: ExcelService,
@@ -50,6 +56,7 @@ export class ExcelController {
     @Req() req: any,
     @Headers('content-type') contentType: string,
     @Headers('content-disposition') contentDisposition: string,
+    @GetCurrentUser() user: User,
   ) {
     try {
       // 处理Binary格式上传
@@ -70,7 +77,11 @@ export class ExcelController {
 
       // 处理账单文件
       const { parsedData, categorizedData, exportResult } =
-        await this.billService.processBillFile(file.path, file.originalname);
+        await this.billService.processBillFile(
+          file.path,
+          file.originalname,
+          user.id,
+        );
 
       // 返回成功响应
       return {
@@ -78,7 +89,7 @@ export class ExcelController {
         fileSize: file.size,
         totalRows: parsedData.totalRows,
         parseTime: parsedData.parseTime,
-        outputFile: exportResult.outputFile,
+        importedCount: exportResult.importedCount,
         categorizedCounts: {
           income: categorizedData.income.length,
           expense: categorizedData.expense.length,

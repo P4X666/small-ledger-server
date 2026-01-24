@@ -6,6 +6,7 @@ import {
   ExcelParseResult,
 } from '../../excel/excel.interface';
 import { cleanData } from './data-cleaner';
+import logger from '../logger';
 
 export class XlsxParser extends ExcelParser {
   get supportedExtensions(): string[] {
@@ -25,11 +26,25 @@ export class XlsxParser extends ExcelParser {
   private readonly amountFieldKeywords = ['金额'];
   private readonly batchSize = 1000; // 分批处理大小
 
+  private extractTimeFromBrackets(str: string): string[] {
+    if (!str || typeof str !== 'string') return []; // 空值/非字符串校验
+    const timeRegex = /\[([^\]]+)\]/g;
+    const result: string[] = [];
+    let match: string[] | null;
+
+    // 循环匹配所有符合的结果
+    while ((match = timeRegex.exec(str)) !== null) {
+      result.push(match[1]); // match[1] 是捕获组的内容（中括号内的时间）
+    }
+
+    return result;
+  }
+
   async parse(
     filePath: string,
     options: ExcelParserOptions = {},
   ): Promise<ExcelParseResult> {
-    const startTime = Date.now();
+    const nowTime = Date.now();
 
     // 验证文件存在
     try {
@@ -60,13 +75,31 @@ export class XlsxParser extends ExcelParser {
     const skipRows = options.skipRows || 0;
     const dataAfterSkip = jsonData.slice(skipRows);
 
+    let startTime = '',
+      endTime = '';
+    try {
+      const timeRangeArr = jsonData.find(
+        (item: string[]) =>
+          item[0].includes('起始时间') && item[0].includes('终止时间'),
+      );
+      if (timeRangeArr) {
+        const [t0, t1] = this.extractTimeFromBrackets(timeRangeArr[0]);
+        startTime = t0;
+        endTime = t1;
+      }
+    } catch (error) {
+      logger.warn('no startTime and endTime');
+    }
+
     // 确保有足够的行
     if (dataAfterSkip.length === 0) {
       return {
         data: [],
+        startTime,
+        endTime,
         fileType: 'xlsx',
         totalRows: 0,
-        parseTime: Date.now() - startTime,
+        parseTime: Date.now() - nowTime,
       };
     }
 
@@ -133,9 +166,11 @@ export class XlsxParser extends ExcelParser {
 
     return {
       data: results,
+      startTime,
+      endTime,
       fileType: 'xlsx',
       totalRows: totalRows, // 只计算数据行数
-      parseTime: Date.now() - startTime,
+      parseTime: Date.now() - nowTime,
     };
   }
 

@@ -1,8 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { extname, join } from 'path';
-import { writeFileSync, existsSync, readFileSync } from 'fs';
+import { extname } from 'path';
 import { BillCategory, PayType } from '../enum';
 import { ExcelService } from './excel.service';
+import { TransactionsService } from '../transactions/transactions.service';
+import { CreateTransactionDto } from '../transactions/transactions.dto';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc'; // 如需处理时区，需安装该插件
+import { ExcelParseResult } from './excel.interface';
+
+dayjs.extend(utc);
+
+interface BillItem extends CreateTransactionDto {
+  /** 交易的金额 */
+  mount: number;
+}
 
 /**
  * 账单服务
@@ -10,7 +21,10 @@ import { ExcelService } from './excel.service';
  */
 @Injectable()
 export class BillService {
-  constructor(private readonly excelService: ExcelService) { }
+  constructor(
+    private readonly excelService: ExcelService,
+    private readonly transactionsService: TransactionsService,
+  ) {}
 
   /**
    * 根据文件类型获取跳过行数
@@ -39,9 +53,11 @@ export class BillService {
   }
 
   // 微信账单分类
-  private wechatpayCategoryHandle(standardizedTransaction: Record<string, string>) {
+  private wechatpayCategoryHandle(
+    standardizedTransaction: Record<string, string>,
+  ) {
     let category = BillCategory.Neutral;
-    const key = '收/支'
+    const key = '收/支';
     if (standardizedTransaction[key] !== undefined) {
       const direction = standardizedTransaction[key];
       if (direction === '收入') {
@@ -50,11 +66,13 @@ export class BillService {
         category = BillCategory.Expense;
       }
     }
-    return category
+    return category;
   }
-  private alipayCategoryHandle(standardizedTransaction: Record<string, string>) {
+  private alipayCategoryHandle(
+    standardizedTransaction: Record<string, string>,
+  ) {
     let category = BillCategory.Neutral;
-    const key = '资金状态'
+    const key = '资金状态';
     if (standardizedTransaction[key] !== undefined) {
       const direction = standardizedTransaction[key];
       if (direction === '已收入') {
@@ -63,37 +81,72 @@ export class BillService {
         category = BillCategory.Expense;
       }
     }
-    return category
+    return category;
   }
-  private generateTransaction(standardizedTransaction: Record<string, string>, payType: PayType,){
+  private getAmountFromTransaction(amount: string) {
+    let money = Number(amount);
+    const unitArr = ['¥'];
+    const currentUnit = unitArr.find((unit) => amount.includes(unit));
+    if (currentUnit) {
+      money = +amount.split(currentUnit)[1];
+    }
+    return money;
+  }
+  private generateTransaction(
+    standardizedTransaction: Record<string, string>,
+    payType: PayType,
+    { startTime = '', endTime = '' },
+  ): BillItem {
     const billData = {
       platform: payType,
+      transactionStartDate: new Date(),
+      transactionEndDate: new Date(),
+    } as BillItem;
 
-    } as {
-      /** 平台来源 */
-      platform: PayType,
-      /** 交易的商店 */
-      shop: string,
-      /** 交易的商品 */
-      product: string,
-      /** 交易的金额 */
-      mount: string,
-      /** 收支类型 */
-      category: BillCategory
-    }
-    if(payType === PayType.Alipay){
-      billData.category = this.alipayCategoryHandle(standardizedTransaction)
-      billData.shop = standardizedTransaction['交易对方']
-      billData.product = standardizedTransaction['商品名称']
-      billData.mount = standardizedTransaction['金额（元）']
-    }else if(payType === PayType.WechatPay){
-      billData.category = this.wechatpayCategoryHandle(standardizedTransaction)
-      billData.shop = standardizedTransaction['交易类型'] + standardizedTransaction['交易对方']
-      billData.product = standardizedTransaction['商品']
-      billData.mount = standardizedTransaction['金额(元)']
+    let transactionDateValue: Date | undefined;
+
+    if (payType === PayType.Alipay) {
+      billData.billId = standardizedTransaction['交易号'];
+      billData.category = this.alipayCategoryHandle(standardizedTransaction);
+      billData.shop = standardizedTransaction['交易对方'];
+      billData.product = standardizedTransaction['商品名称'];
+      billData.mount = this.getAmountFromTransaction(
+        standardizedTransaction['金额（元）'],
+      );
+      billData.description = standardizedTransaction['备注'];
+
+      // 设置交易日期
+      const transactionDate =
+        standardizedTransaction['交易创建时间'] ||
+        standardizedTransaction['付款时间'];
+      if (transactionDate) {
+        transactionDateValue = dayjs(transactionDate).toDate();
+        billData.transactionDate = transactionDateValue;
+      }
+      billData.transactionStartDate = dayjs(startTime).toDate();
+      billData.transactionEndDate = dayjs(endTime).toDate();
+    } else if (payType === PayType.WechatPay) {
+      billData.billId = standardizedTransaction['交易单号'];
+      billData.category = this.wechatpayCategoryHandle(standardizedTransaction);
+      billData.shop =
+        standardizedTransaction['交易类型'] +
+        standardizedTransaction['交易对方'];
+      billData.product = standardizedTransaction['商品'];
+      billData.mount = this.getAmountFromTransaction(
+        standardizedTransaction['金额(元)'],
+      );
+      billData.description = standardizedTransaction['备注'];
+
+      const transactionDate = standardizedTransaction['交易时间'];
+      if (transactionDate) {
+        transactionDateValue = dayjs(transactionDate).toDate();
+        billData.transactionDate = transactionDateValue;
+      }
+      billData.transactionStartDate = dayjs(startTime).toDate();
+      billData.transactionEndDate = dayjs(endTime).toDate();
     }
 
-    return billData
+    return billData;
   }
   /**
    * 分类交易数据
@@ -102,16 +155,19 @@ export class BillService {
    * @returns 分类后的交易数据
    */
   categorizeTransactions(
-    transactions: any[],
+    parseData: ExcelParseResult,
     payType: PayType,
   ): {
-    income: any[];
-    expense: any[];
-    neutral: any[];
+    income: BillItem[];
+    expense: BillItem[];
+    neutral: BillItem[];
   } {
-    const income: any[] = [];
-    const expense: any[] = [];
-    const neutral: any[] = [];
+    const transactions: any[] = parseData.data;
+    const { startTime, endTime } = parseData;
+
+    const income: BillItem[] = [];
+    const expense: BillItem[] = [];
+    const neutral: BillItem[] = [];
 
     for (const transaction of transactions) {
       // 过滤掉统计信息行和空行
@@ -120,12 +176,16 @@ export class BillService {
       }
 
       // 转换为标准格式
-      const standardizedTransaction = this.generateTransaction(transaction, payType);
+      const standardizedTransaction = this.generateTransaction(
+        transaction,
+        payType,
+        { startTime, endTime },
+      );
 
       // 分类逻辑
       const category = standardizedTransaction.category;
 
-      const cleanedTransaction = standardizedTransaction
+      const cleanedTransaction = standardizedTransaction;
       // 添加到相应分类
       if (category === 'income') {
         income.push(cleanedTransaction);
@@ -139,47 +199,84 @@ export class BillService {
     return { income, expense, neutral };
   }
 
+  private async createTransaction(
+    userId: number,
+    transcations: BillItem[],
+    category: BillCategory,
+  ): Promise<number> {
+    let count = 0;
+
+    for (const item of transcations) {
+      // 确保billId存在，否则跳过该记录
+      if (!item.billId) {
+        console.warn('跳过缺少billId的记录:', item);
+        continue;
+      }
+
+      const transactionDto: CreateTransactionDto = {
+        ...item,
+        type: category,
+        amount: item.mount,
+      };
+
+      // 检查是否已存在该billId的交易记录
+      const existingTransaction = await this.transactionsService.findByBillId(
+        item.billId,
+        userId,
+      );
+
+      if (existingTransaction) {
+        // 如果存在，执行更新操作
+        await this.transactionsService.update(
+          existingTransaction.id,
+          userId,
+          transactionDto,
+        );
+      } else {
+        // 如果不存在，执行新增操作
+        await this.transactionsService.create(userId, transactionDto);
+      }
+      count++;
+    }
+
+    return count;
+  }
+
   /**
-   * 导出账单数据到bill.json
+   * 导出账单数据到transactions表
    * @param categorizedData 分类后的交易数据
    * @returns 导出结果
    */
-  exportToBillJson(categorizedData: {
-    income: any[];
-    expense: any[];
-    neutral: any[];
-  }): { outputFile: string } {
-    const outputPath = join(process.cwd(), 'bill.json');
+  async exportToTransactions(
+    categorizedData: {
+      income: any[];
+      expense: any[];
+      neutral: any[];
+    },
+    userId: number,
+  ): Promise<{ importedCount: number }> {
+    let importedCount = 0;
 
-    // 读取现有的bill.json文件（如果存在）
-    let existingData = {
-      income: [],
-      expense: [],
-      neutral: [],
-    };
+    // 处理收入数据
+    importedCount += await this.createTransaction(
+      userId,
+      categorizedData.income,
+      BillCategory.Income,
+    );
+    // 处理支出数据
+    importedCount += await this.createTransaction(
+      userId,
+      categorizedData.expense,
+      BillCategory.Expense,
+    );
+    // 处理中性数据
+    importedCount += await this.createTransaction(
+      userId,
+      categorizedData.neutral,
+      BillCategory.Neutral,
+    );
 
-    try {
-      if (existsSync(outputPath)) {
-        const existingContent = readFileSync(outputPath, 'utf8');
-        if (existingContent) {
-          existingData = JSON.parse(existingContent);
-        }
-      }
-    } catch (error) {
-      console.error('读取现有bill.json文件失败:', error.message);
-    }
-
-    // 合并并清理数据
-    const mergedData = {
-      income: [...existingData.income, ...categorizedData.income],
-      expense: [...existingData.expense, ...categorizedData.expense],
-      neutral: [...existingData.neutral, ...categorizedData.neutral],
-    };
-
-    // 写入合并后的数据
-    writeFileSync(outputPath, JSON.stringify(mergedData, null, 2), 'utf8');
-
-    return { outputFile: 'bill.json' };
+    return { importedCount };
   }
 
   /**
@@ -191,6 +288,7 @@ export class BillService {
   async processBillFile(
     filePath: string,
     originalname: string,
+    userId: number,
   ): Promise<{
     parsedData: any;
     categorizedData: {
@@ -198,7 +296,7 @@ export class BillService {
       expense: any[];
       neutral: any[];
     };
-    exportResult: { outputFile: string };
+    exportResult: { importedCount: number };
   }> {
     // 获取文件扩展名
     const ext = extname(originalname).toLowerCase();
@@ -210,13 +308,13 @@ export class BillService {
     const parsedData = await this.excelService.parse(filePath, { skipRows });
 
     // 分类数据
-    const categorizedData = this.categorizeTransactions(
-      parsedData.data,
-      payType,
-    );
+    const categorizedData = this.categorizeTransactions(parsedData, payType);
 
-    // 导出到bill.json
-    const exportResult = this.exportToBillJson(categorizedData);
+    // 导出到transactions表
+    const exportResult = await this.exportToTransactions(
+      categorizedData,
+      userId,
+    );
 
     return { parsedData, categorizedData, exportResult };
   }

@@ -51,8 +51,6 @@ export class ZipParser extends ExcelParser {
         parseTime: Date.now() - startTime,
       };
     } catch (error) {
-      console.error('解析ZIP文件失败:', error.message);
-      console.error(error.stack);
       throw new Error(`解析ZIP文件失败: ${(error as Error).message}`);
     } finally {
       // 清理临时文件

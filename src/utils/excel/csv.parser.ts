@@ -5,6 +5,7 @@ import {
   ExcelParseResult,
 } from '../../excel/excel.interface';
 import { cleanData } from './data-cleaner';
+import logger from '../logger';
 
 export class CsvParser extends ExcelParser {
   get supportedExtensions(): string[] {
@@ -12,14 +13,10 @@ export class CsvParser extends ExcelParser {
   }
 
   // 正则预编译
-  private static readonly REGEX_CONTROL_CHARS =
-    /[\x00-\x1F\x7F\u200B-\u200D\uFEFF]/g;
   private static readonly REGEX_GARBLED = /[\ufffd]/g;
-  private static readonly REGEX_VALID_CHARS = /[\u4e00-\u9fa5a-zA-Z0-9]/;
   private static readonly REGEX_VALID_CHARS_MULTIPLE =
     /[\u4e00-\u9fa5a-zA-Z0-9]{2,}/;
   private static readonly REGEX_CSV_DELIMITERS = /[,;\t]/;
-  private static readonly REGEX_AMOUNT_CLEAN = /[\x00-\x1F\x7F]/g;
 
   // 编码缓存
   private encodingCache = new Map<string, string>();
@@ -71,13 +68,27 @@ export class CsvParser extends ExcelParser {
     };
   }
 
+  private extractTimeFromBrackets(str: string): string[] {
+    if (!str || typeof str !== 'string') return []; // 空值/非字符串校验
+    const timeRegex = /\[([^\]]+)\]/g;
+    const result: string[] = [];
+    let match: string[] | null;
+
+    // 循环匹配所有符合的结果
+    while ((match = timeRegex.exec(str)) !== null) {
+      result.push(match[1]); // match[1] 是捕获组的内容（中括号内的时间）
+    }
+
+    return result;
+  }
+
   private async parseWithEncoding(
     filePath: string,
     encoding: string,
     delimiter: string,
     options: ExcelParserOptions = {},
   ): Promise<ExcelParseResult> {
-    const startTime = Date.now();
+    const currentTime = Date.now();
 
     return new Promise<ExcelParseResult>((resolve, reject) => {
       const results: any[] = [];
@@ -109,14 +120,30 @@ export class CsvParser extends ExcelParser {
 
             // 跳过指定行数
             const linesAfterSkip = lines.slice(skipRows);
-
+            let startTime = '',
+              endTime = '';
+            try {
+              const timeRangeArr = lines.find(
+                (item) =>
+                  item.includes('起始日期') && item.includes('终止日期'),
+              );
+              if (timeRangeArr) {
+                const [t0, t1] = this.extractTimeFromBrackets(timeRangeArr[0]);
+                startTime = t0;
+                endTime = t1;
+              }
+            } catch (error) {
+              logger.warn('no startTime and endTime');
+            }
             // 确保有足够的行
             if (linesAfterSkip.length === 0) {
               resolve({
                 data: [],
+                startTime,
+                endTime,
                 fileType: 'csv',
                 totalRows: 0,
-                parseTime: Date.now() - startTime,
+                parseTime: Date.now() - currentTime,
               });
               return;
             }
@@ -182,9 +209,11 @@ export class CsvParser extends ExcelParser {
             }
             resolve({
               data: results,
+              startTime,
+              endTime,
               fileType: 'csv',
               totalRows: totalRows, // 只计算数据行数
-              parseTime: Date.now() - startTime,
+              parseTime: Date.now() - currentTime,
             });
           })
           .on('error', (error: Error) => {

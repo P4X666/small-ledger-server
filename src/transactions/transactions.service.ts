@@ -21,8 +21,19 @@ export class TransactionsService {
     user_id: number,
     createTransactionDto: CreateTransactionDto,
   ): Promise<Transaction> {
+    const {
+      billId,
+      transactionDate,
+      transactionStartDate,
+      transactionEndDate,
+      ...rest
+    } = createTransactionDto;
     const transaction = this.transactionsRepository.create({
-      ...createTransactionDto,
+      ...rest,
+      bill_id: billId,
+      transaction_start_date: transactionStartDate,
+      transaction_end_date: transactionEndDate,
+      transaction_date: transactionDate || null,
       user_id,
     });
     return this.transactionsRepository.save(transaction);
@@ -53,6 +64,16 @@ export class TransactionsService {
       throw new NotFoundException(`Transaction with ID ${id} not found`);
     }
     return transaction;
+  }
+
+  // 根据billId和user_id获取交易记录
+  async findByBillId(
+    billId: string,
+    user_id: number,
+  ): Promise<Transaction | null> {
+    return this.transactionsRepository.findOne({
+      where: { bill_id: billId, user_id },
+    });
   }
 
   // 更新交易记录

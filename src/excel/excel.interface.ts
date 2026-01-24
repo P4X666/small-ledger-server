@@ -38,6 +38,9 @@ export interface ExcelParseResult {
    * 解析耗时（毫秒）
    */
   parseTime: number;
+
+  startTime: string;
+  endTime: string;
 }
 
 export interface ExcelValidator {

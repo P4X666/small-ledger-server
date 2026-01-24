@@ -20,18 +20,6 @@ describe('ExcelService', () => {
     service = module.get<ExcelService>(ExcelService);
     testDir = join(__dirname, 'test-files');
 
-    // 清空bill.json文件
-    const billJsonPath = join(process.cwd(), 'bill.json');
-    try {
-      writeFileSync(
-        billJsonPath,
-        JSON.stringify({ income: [], expense: [], neutral: [] }, null, 2),
-        'utf8',
-      );
-    } catch (error) {
-      console.warn('清空bill.json文件失败:', error.message);
-    }
-
     // 创建测试目录
     try {
       mkdirSync(testDir, { recursive: true });

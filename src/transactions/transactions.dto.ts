@@ -1,3 +1,5 @@
+import { BillCategory, PayType } from '../enum';
+import { PartialType } from '@nestjs/mapped-types';
 import {
   IsString,
   IsOptional,
@@ -9,8 +11,20 @@ import {
 
 // 创建交易DTO
 export class CreateTransactionDto {
-  @IsEnum(['income', 'expense'])
-  type: 'income' | 'expense';
+  @IsString()
+  billId: string;
+
+  @IsEnum(PayType)
+  platform: string;
+
+  @IsString()
+  shop: string;
+
+  @IsString()
+  product: string;
+
+  @IsEnum(BillCategory)
+  type: BillCategory;
 
   @IsNumber()
   @Min(0.01)
@@ -24,32 +38,18 @@ export class CreateTransactionDto {
   description?: string;
 
   @IsDateString()
-  transaction_date: Date;
+  @IsOptional()
+  transactionDate: Date;
+
+  @IsDateString()
+  transactionStartDate: Date;
+
+  @IsDateString()
+  transactionEndDate: Date;
 }
 
 // 更新交易DTO
-export class UpdateTransactionDto {
-  @IsOptional()
-  @IsEnum(['income', 'expense'])
-  type?: 'income' | 'expense';
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0.01)
-  amount?: number;
-
-  @IsOptional()
-  @IsString()
-  category?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsDateString()
-  transaction_date?: Date;
-}
+export class UpdateTransactionDto extends PartialType(CreateTransactionDto) {}
 
 // 交易统计响应DTO
 export class TransactionStatisticsDto {

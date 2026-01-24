@@ -24,5 +24,5 @@ export enum PayType {
 export enum BillCategory {
   Income = 'income',
   Expense = 'expense',
-  Neutral = 'neutral'
+  Neutral = 'neutral',
 }

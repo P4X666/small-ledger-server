@@ -7,6 +7,7 @@ import {
   UpdateTransactionDto,
 } from '../../src/transactions/transactions.dto';
 import { NotFoundException } from '@nestjs/common';
+import { BillCategory, PayType } from '@/enum';
 
 // Mock factory
 const mockRepository = jest.fn(() => ({
@@ -49,17 +50,28 @@ describe('TransactionsService', () => {
   describe('create', () => {
     it('should create a new transaction for a user', async () => {
       const createDto: CreateTransactionDto = {
-        type: 'income',
+        billId: '51534654664',
+        type: BillCategory.Income,
         amount: 100,
         category: 'salary',
         description: 'Monthly salary',
-        transaction_date: new Date(),
+        transactionDate: new Date(),
+        platform: PayType.Alipay,
+        shop: 'test shop',
+        product: 'test product',
+        transactionStartDate: new Date(),
+        transactionEndDate: new Date()
       };
 
       const result = await transactionsService.create(1, createDto);
 
+      const { billId, transactionDate, transactionStartDate, transactionEndDate, ...rest } = createDto;
       expect(transactionsRepository.create).toHaveBeenCalledWith({
-        ...createDto,
+        ...rest,
+        bill_id: billId,
+        transaction_date: transactionDate || null,
+        transaction_start_date: transactionStartDate,
+        transaction_end_date: transactionEndDate,
         user_id: 1,
       });
       expect(transactionsRepository.save).toHaveBeenCalled();
