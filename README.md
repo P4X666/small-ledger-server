@@ -12,6 +12,11 @@
 - **日志管理**：Winston（控制台输出 + 文件存储）
 - **测试框架**：Jest
 - **文档工具**：Swagger
+- **文件上传**：Multer
+- **Excel处理**：xlsx (Excel解析)、csv-parser (CSV解析)、adm-zip (ZIP处理)
+- **日期处理**：dayjs
+- **字符编码**：chardet、iconv-lite
+- **文件系统**：fs-extra
 
 ## 核心数据模型
 
@@ -118,11 +123,17 @@
 ### 3. 记账模型（Transaction）
 - `id`: 唯一标识
 - `user_id`: 用户ID
-- `type`: 类型（收入/支出）
+- `bill_id`: 账单ID（用于账单导入）
+- `type`: 类型（收入/支出/中性）
 - `amount`: 金额
 - `category`: 分类
 - `description`: 描述
+- `shop`: 商家名称
+- `product`: 商品名称
+- `platform`: 支付平台（支付宝/微信支付）
 - `transaction_date`: 交易日期
+- `transaction_start_date`: 交易开始日期
+- `transaction_end_date`: 交易结束日期
 - `created_at`: 创建时间
 - `updated_at`: 更新时间
 
@@ -138,6 +149,45 @@
 - `status`: 状态（进行中、已完成、已失败）
 - `created_at`: 创建时间
 - `updated_at`: 更新时间
+
+### 5. Excel账单导入模型
+
+#### 核心目标
+Excel账单导入模型旨在帮助用户快速导入和管理支付宝、微信支付等平台的账单数据，实现自动分类、转换和存储，提高记账效率。
+
+#### 支持格式
+- Excel文件：`.xlsx`、`.xls`（微信支付账单）
+- CSV文件：`.csv`（支付宝账单）
+- 压缩文件：`.zip`（支付宝账单压缩包）
+
+#### 数据处理流程
+1. **文件上传**：用户上传账单文件
+2. **格式验证**：验证文件格式和完整性
+3. **数据解析**：根据文件类型选择合适的解析器
+4. **数据清洗**：过滤无效数据，统一格式
+5. **自动分类**：根据交易类型自动分类为收入/支出/中性
+6. **重复检查**：根据账单ID检查重复记录
+7. **数据导入**：导入到交易表，支持新增和更新
+
+#### 关键功能模块
+1. **多格式支持**：支持多种账单格式和支付平台
+2. **智能解析**：自动识别文件格式和支付平台
+3. **数据去重**：避免重复导入相同交易记录
+4. **自动分类**：根据交易类型智能分类
+5. **批量处理**：支持批量导入多个文件
+6. **交易统计**：实时统计导入结果
+
+#### 使用场景
+1. **账单批量导入**：快速导入历史账单数据
+2. **多平台账单管理**：统一管理不同支付平台的账单
+3. **自动记账**：减少手动记账的工作量
+4. **数据备份**：定期导入账单作为数据备份
+
+#### 限制条件
+1. **文件大小**：受服务器配置限制
+2. **格式要求**：必须使用各支付平台的标准账单格式
+3. **权限限制**：用户只能导入自己的账单数据
+4. **数据安全**：敏感操作需要JWT认证
 
 ## API接口设计
 
@@ -177,7 +227,12 @@
 | DELETE | /api/transactions/:id        | 删除交易记录            |
 | GET    | /api/transactions/statistics | 获取收支统计            |
 
-### 5. 攒钱目标接口
+### 5. Excel账单导入接口
+| 方法     | 路径                   | 描述                |
+| ------ | -------------------- | ----------------- |
+| POST   | /api/excel/upload    | 上传并处理账单文件        |
+
+### 6. 攒钱目标接口
 | 方法     | 路径                              | 描述       |
 | ------ | ------------------------------- | -------- |
 | POST   | /api/savings-goals              | 创建攒钱目标   |
@@ -193,8 +248,14 @@
 src/
 ├── app.module.ts                 # 应用根模块
 ├── main.ts                      # 应用入口文件
+├── config/                      # 配置模块
+│   └── jwt.config.ts            # JWT配置
+├── enum/                        # 枚举定义
+│   └── index.ts                 # 枚举类型定义
 ├── middleware/
 │   └── logger.middleware.ts     # API请求日志中间件
+├── interceptors/
+│   └── response.interceptor.ts  # 响应拦截器
 ├── auth/                        # 认证模块
 │   ├── auth.module.ts           # 认证模块配置
 │   ├── auth.service.ts          # 认证服务
@@ -226,8 +287,25 @@ src/
 │   ├── savings-goals.service.ts # 攒钱目标服务
 │   ├── savings-goals.entity.ts  # 攒钱目标实体
 │   └── savings-goals.dto.ts     # 攒钱目标数据传输对象
+├── excel/                       # Excel账单导入模块
+│   ├── excel.module.ts          # Excel模块配置
+│   ├── excel.controller.ts      # Excel控制器
+│   ├── excel.service.ts         # Excel服务
+│   ├── bill.service.ts          # 账单处理服务
+│   ├── upload-file.service.ts   # 文件上传服务
+│   ├── excel.parser.factory.ts  # 解析器工厂
+│   ├── excel.interface.ts       # 接口定义
+│   └── index.ts                 # 模块导出
 └── utils/
-    └── logger.ts                # 日志配置
+    ├── logger.ts                # 日志配置
+    ├── common.ts                # 通用工具
+    ├── http-exception.filter.ts # HTTP异常过滤器
+    └── excel/                   # Excel工具
+        ├── csv.parser.ts        # CSV解析器
+        ├── xlsx.parser.ts       # Excel解析器
+        ├── zip.parser.ts        # ZIP解析器
+        ├── data-cleaner.ts      # 数据清洗工具
+        └── file-type-utils.ts   # 文件类型工具
 test/
 ├── 测试
 ```

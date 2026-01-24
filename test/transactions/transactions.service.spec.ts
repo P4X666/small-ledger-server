@@ -60,12 +60,18 @@ describe('TransactionsService', () => {
         shop: 'test shop',
         product: 'test product',
         transactionStartDate: new Date(),
-        transactionEndDate: new Date()
+        transactionEndDate: new Date(),
       };
 
       const result = await transactionsService.create(1, createDto);
 
-      const { billId, transactionDate, transactionStartDate, transactionEndDate, ...rest } = createDto;
+      const {
+        billId,
+        transactionDate,
+        transactionStartDate,
+        transactionEndDate,
+        ...rest
+      } = createDto;
       expect(transactionsRepository.create).toHaveBeenCalledWith({
         ...rest,
         bill_id: billId,
