@@ -15,8 +15,9 @@
 - **文件上传**：Multer
 - **Excel处理**：xlsx (Excel解析)、csv-parser (CSV解析)、adm-zip (ZIP处理)
 - **日期处理**：dayjs
-- **字符编码**：chardet、iconv-lite
+- **字符编码**：iconv-lite
 - **文件系统**：fs-extra
+- **货币计算**：currency.js
 
 ## 核心数据模型
 

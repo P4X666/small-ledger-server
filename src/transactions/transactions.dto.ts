@@ -53,10 +53,11 @@ export class UpdateTransactionDto extends PartialType(CreateTransactionDto) {}
 
 // 交易统计响应DTO
 export class TransactionStatisticsDto {
-  total_income: number;
-  total_expense: number;
+  totalIncome: number;
+  totalExpense: number;
+  totalNeutral: number;
   balance: number;
-  category_stats: {
+  categoryStats: {
     [key: string]: {
       amount: number;
       percentage: number;

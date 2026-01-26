@@ -50,6 +50,13 @@ export class TransactionsController {
     );
   }
 
+  @Get('statistics')
+  async getStatistics(
+    @GetCurrentUser() user: User,
+  ): Promise<TransactionStatisticsDto> {
+    return this.transactionsService.getStatistics(user.id);
+  }
+
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -73,12 +80,5 @@ export class TransactionsController {
     @GetCurrentUser() user: User,
   ): Promise<void> {
     return this.transactionsService.remove(+id, user.id);
-  }
-
-  @Get('statistics')
-  async getStatistics(
-    @GetCurrentUser() user: User,
-  ): Promise<TransactionStatisticsDto> {
-    return this.transactionsService.getStatistics(user.id);
   }
 }

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import currency from 'currency.js';
+import { BillCategory } from '../enum';
 import { Transaction } from './transactions.entity';
 import {
   CreateTransactionDto,
@@ -101,43 +103,60 @@ export class TransactionsService {
       where: { user_id },
     });
 
-    // 计算总收入和总支出
-    const total_income = transactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    // 计算总收入和总支出 - 使用currency.js消除浮点精度问题
+    const totalIncome = transactions
+      .filter((t) => t.type === BillCategory.Income)
+      .reduce((sum, t) => sum.add(t.amount), currency(0))
+      .value;
 
-    const total_expense = transactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const totalExpense = transactions
+      .filter((t) => t.type === BillCategory.Expense)
+      .reduce((sum, t) => sum.add(t.amount), currency(0))
+      .value;
 
-    const balance = total_income - total_expense;
+    const totalNeutral = transactions
+      .filter((t) => t.type === BillCategory.Neutral)
+      .reduce((sum, t) => sum.add(t.amount), currency(0))
+      .value;
+
+    const balance = currency(totalIncome).subtract(totalExpense).value;
 
     // 计算各分类统计
     const categoryMap = new Map<string, number>();
     transactions.forEach((t) => {
-      const key = `${t.type}-${t.category}`;
+      const key = t.type;
       const current = categoryMap.get(key) || 0;
-      categoryMap.set(key, current + parseFloat(t.amount.toString()));
+      const newAmount = currency(current).add(t.amount).value;
+      categoryMap.set(key, newAmount);
     });
 
-    const category_stats: {
+    const categoryStats: {
       [key: string]: { amount: number; percentage: number };
     } = {};
     categoryMap.forEach((amount, key) => {
-      const [type] = key.split('-');
-      const total = type === 'income' ? total_income : total_expense;
-      const percentage = total > 0 ? (amount / total) * 100 : 0;
-      category_stats[key] = {
+      let total = 0;
+      
+      if (key === BillCategory.Income) {
+        total = totalIncome;
+      } else if (key === BillCategory.Expense) {
+        total = totalExpense;
+      } else if (key === BillCategory.Neutral) {
+        total = totalNeutral;
+      }
+      
+      const percentage = total > 0 ? parseFloat((amount / total * 100).toFixed(2)) : 0;
+      categoryStats[key] = {
         amount,
-        percentage: parseFloat(percentage.toFixed(2)),
+        percentage,
       };
     });
 
     return {
-      total_income,
-      total_expense,
+      totalIncome,
+      totalExpense,
+      totalNeutral,
       balance,
-      category_stats,
+      categoryStats,
     };
   }
 }

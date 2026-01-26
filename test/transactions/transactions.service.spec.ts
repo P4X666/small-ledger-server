@@ -261,24 +261,16 @@ describe('TransactionsService', () => {
       expect(transactionsRepository.find).toHaveBeenCalledWith({
         where: { user_id: 1 },
       });
-      expect(result.total_income).toBe(1500);
-      expect(result.total_expense).toBe(500);
+      expect(result.totalIncome).toBe(1500);
+      expect(result.totalExpense).toBe(500);
       expect(result.balance).toBe(1000);
-      expect(result.category_stats['income-salary']).toEqual({
-        amount: 1000,
-        percentage: 66.67,
+      expect(result.categoryStats['income']).toEqual({
+        amount: 1500,
+        percentage: 100,
       });
-      expect(result.category_stats['income-bonus']).toEqual({
+      expect(result.categoryStats['expense']).toEqual({
         amount: 500,
-        percentage: 33.33,
-      });
-      expect(result.category_stats['expense-food']).toEqual({
-        amount: 300,
-        percentage: 60,
-      });
-      expect(result.category_stats['expense-transport']).toEqual({
-        amount: 200,
-        percentage: 40,
+        percentage: 100,
       });
     });
 
@@ -287,10 +279,11 @@ describe('TransactionsService', () => {
 
       const result = await transactionsService.getStatistics(1);
 
-      expect(result.total_income).toBe(0);
-      expect(result.total_expense).toBe(0);
+      expect(result.totalIncome).toBe(0);
+      expect(result.totalExpense).toBe(0);
+      expect(result.totalNeutral).toBe(0);
       expect(result.balance).toBe(0);
-      expect(result.category_stats).toEqual({});
+      expect(result.categoryStats).toEqual({});
     });
 
     it('should handle only income transactions', async () => {
@@ -303,10 +296,15 @@ describe('TransactionsService', () => {
 
       const result = await transactionsService.getStatistics(1);
 
-      expect(result.total_income).toBe(1500);
-      expect(result.total_expense).toBe(0);
+      expect(result.totalIncome).toBe(1500);
+      expect(result.totalExpense).toBe(0);
+      expect(result.totalNeutral).toBe(0);
       expect(result.balance).toBe(1500);
-      expect(Object.keys(result.category_stats)).toHaveLength(2);
+      expect(Object.keys(result.categoryStats)).toHaveLength(1);
+      expect(result.categoryStats['income']).toEqual({
+        amount: 1500,
+        percentage: 100,
+      });
     });
 
     it('should handle only expense transactions', async () => {
@@ -325,10 +323,15 @@ describe('TransactionsService', () => {
 
       const result = await transactionsService.getStatistics(1);
 
-      expect(result.total_income).toBe(0);
-      expect(result.total_expense).toBe(500);
+      expect(result.totalIncome).toBe(0);
+      expect(result.totalExpense).toBe(500);
+      expect(result.totalNeutral).toBe(0);
       expect(result.balance).toBe(-500);
-      expect(Object.keys(result.category_stats)).toHaveLength(2);
+      expect(Object.keys(result.categoryStats)).toHaveLength(1);
+      expect(result.categoryStats['expense']).toEqual({
+        amount: 500,
+        percentage: 100,
+      });
     });
   });
 });
