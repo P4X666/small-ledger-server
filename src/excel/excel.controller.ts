@@ -6,25 +6,25 @@ import {
   Req,
   Headers,
   UseGuards,
-  NotFoundException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ExcelService } from './excel.service';
 import { UploadFileService } from './upload-file.service';
-import { BillService } from './bill.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { GetCurrentUser } from '../auth/get-current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { User } from '../users/users.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ExcelEventTypes, FileUploadedEvent, type FileMetadata } from './events/excel-events';
 
 @Controller('excel')
 @UseGuards(JwtAuthGuard)
 export class ExcelController {
   constructor(
-    private readonly excelService: ExcelService,
     private readonly uploadFileService: UploadFileService,
-    private readonly billService: BillService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Post('upload')
@@ -52,7 +52,7 @@ export class ExcelController {
     }),
   )
   async uploadFile(
-    @UploadedFile() file: any,
+    @UploadedFile() file: FileMetadata,
     @Req() req: any,
     @Headers('content-type') contentType: string,
     @Headers('content-disposition') contentDisposition: string,
@@ -75,33 +75,31 @@ export class ExcelController {
       // 检查文件是否存在
       this.uploadFileService.validateFileExists(file);
 
-      // 处理账单文件
-      const { parsedData, categorizedData, exportResult } =
-        await this.billService.processBillFile(
-          file.path,
-          file.originalname,
-          user.id,
-        );
+      // 发布文件上传事件
+      const fileUploadedEvent: FileUploadedEvent = {
+        file,
+        userId: user.id,
+        originalname: file.originalname,
+        filePath: file.path,
+      };
+
+      this.eventEmitter.emit(ExcelEventTypes.FILE_UPLOADED, fileUploadedEvent);
 
       // 返回成功响应
       return {
         fileName: file.originalname,
         fileSize: file.size,
-        totalRows: parsedData.totalRows,
-        parseTime: parsedData.parseTime,
-        importedCount: exportResult.importedCount,
-        categorizedCounts: {
-          income: categorizedData.income.length,
-          expense: categorizedData.expense.length,
-          neutral: categorizedData.neutral.length,
-        },
+        message: '文件上传成功，正在处理中',
       };
     } catch (error) {
       // 返回错误响应
-      return {
-        status: 'error',
-        message: error.message,
-      };
+      throw new HttpException(
+        {
+          status: 'error',
+          message: error.message,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }

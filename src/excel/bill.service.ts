@@ -1,30 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { extname } from 'path';
 import { BillCategory, PayType } from '../enum';
 import { ExcelService } from './excel.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { CreateTransactionDto } from '../transactions/transactions.dto';
+import { BillItem } from './events/excel-events';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'; // 如需处理时区，需安装该插件
 import { ExcelParseResult } from './excel.interface';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { ExcelEventTypes } from './events/excel-events';
+import type {FileUploadedEvent,BillProcessedEvent} from './events/excel-events';
 
 dayjs.extend(utc);
-
-interface BillItem extends CreateTransactionDto {
-  /** 交易的金额 */
-  mount: number;
-}
 
 /**
  * 账单服务
  * 处理账单相关的操作，包括交易分类、账单导出和数据合并
  */
 @Injectable()
-export class BillService {
+export class BillService implements OnModuleInit {
+  private readonly logger = new Logger(BillService.name);
+  
   constructor(
     private readonly excelService: ExcelService,
     private readonly transactionsService: TransactionsService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly dataSource: DataSource,
   ) {}
+
+  onModuleInit() {
+    // 模块初始化时的逻辑（如果需要）
+  }
 
   /**
    * 根据文件类型获取跳过行数
@@ -162,7 +170,7 @@ export class BillService {
     expense: BillItem[];
     neutral: BillItem[];
   } {
-    const transactions: any[] = parseData.data;
+    const transactions: Record<string, string>[] = parseData.data;
     const { startTime, endTime } = parseData;
 
     const income: BillItem[] = [];
@@ -209,7 +217,7 @@ export class BillService {
     for (const item of transcations) {
       // 确保billId存在，否则跳过该记录
       if (!item.billId) {
-        console.warn('跳过缺少billId的记录:', item);
+        this.logger.warn('跳过缺少billId的记录:', item);
         continue;
       }
 
@@ -249,34 +257,68 @@ export class BillService {
    */
   async exportToTransactions(
     categorizedData: {
-      income: any[];
-      expense: any[];
-      neutral: any[];
+      income: BillItem[];
+      expense: BillItem[];
+      neutral: BillItem[];
     },
     userId: number,
   ): Promise<{ importedCount: number }> {
-    let importedCount = 0;
+    // 使用事务包装整个导入过程，确保原子性
+    return this.dataSource.transaction(async () => {
+      let importedCount = 0;
 
-    // 处理收入数据
-    importedCount += await this.createTransaction(
-      userId,
-      categorizedData.income,
-      BillCategory.Income,
-    );
-    // 处理支出数据
-    importedCount += await this.createTransaction(
-      userId,
-      categorizedData.expense,
-      BillCategory.Expense,
-    );
-    // 处理中性数据
-    importedCount += await this.createTransaction(
-      userId,
-      categorizedData.neutral,
-      BillCategory.Neutral,
-    );
+      // 处理收入数据
+      importedCount += await this.createTransaction(
+        userId,
+        categorizedData.income,
+        BillCategory.Income,
+      );
+      // 处理支出数据
+      importedCount += await this.createTransaction(
+        userId,
+        categorizedData.expense,
+        BillCategory.Expense,
+      );
+      // 处理中性数据
+      importedCount += await this.createTransaction(
+        userId,
+        categorizedData.neutral,
+        BillCategory.Neutral,
+      );
 
-    return { importedCount };
+      return { importedCount };
+    });
+  }
+
+  /**
+   * 监听文件上传事件
+   * @param event 文件上传事件数据
+   */
+  @OnEvent(ExcelEventTypes.FILE_UPLOADED)
+  async handleFileUploadedEvent(event: FileUploadedEvent) {
+    try {
+      // 处理账单文件
+      const result = await this.processBillFile(
+        event.filePath,
+        event.originalname,
+        event.userId,
+      );
+
+      // 发布账单处理完成事件
+      const billProcessedEvent: BillProcessedEvent = {
+        result,
+        userId: event.userId,
+        originalname: event.originalname,
+      };
+
+      this.eventEmitter.emit(
+        ExcelEventTypes.BILL_PROCESSED,
+        billProcessedEvent,
+      );
+    } catch (error) {
+      this.logger.error('处理文件上传事件时出错:', error);
+      // 可以在这里添加错误处理逻辑，例如发布错误事件
+    }
   }
 
   /**
@@ -290,11 +332,11 @@ export class BillService {
     originalname: string,
     userId: number,
   ): Promise<{
-    parsedData: any;
+    parsedData: ExcelParseResult;
     categorizedData: {
-      income: any[];
-      expense: any[];
-      neutral: any[];
+      income: BillItem[];
+      expense: BillItem[];
+      neutral: BillItem[];
     };
     exportResult: { importedCount: number };
   }> {

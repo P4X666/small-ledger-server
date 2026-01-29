@@ -106,18 +106,15 @@ export class TransactionsService {
     // 计算总收入和总支出 - 使用currency.js消除浮点精度问题
     const totalIncome = transactions
       .filter((t) => t.type === BillCategory.Income)
-      .reduce((sum, t) => sum.add(t.amount), currency(0))
-      .value;
+      .reduce((sum, t) => sum.add(t.amount), currency(0)).value;
 
     const totalExpense = transactions
       .filter((t) => t.type === BillCategory.Expense)
-      .reduce((sum, t) => sum.add(t.amount), currency(0))
-      .value;
+      .reduce((sum, t) => sum.add(t.amount), currency(0)).value;
 
     const totalNeutral = transactions
       .filter((t) => t.type === BillCategory.Neutral)
-      .reduce((sum, t) => sum.add(t.amount), currency(0))
-      .value;
+      .reduce((sum, t) => sum.add(t.amount), currency(0)).value;
 
     const balance = currency(totalIncome).subtract(totalExpense).value;
 
@@ -135,7 +132,7 @@ export class TransactionsService {
     } = {};
     categoryMap.forEach((amount, key) => {
       let total = 0;
-      
+
       if (key === BillCategory.Income) {
         total = totalIncome;
       } else if (key === BillCategory.Expense) {
@@ -143,8 +140,9 @@ export class TransactionsService {
       } else if (key === BillCategory.Neutral) {
         total = totalNeutral;
       }
-      
-      const percentage = total > 0 ? parseFloat((amount / total * 100).toFixed(2)) : 0;
+
+      const percentage =
+        total > 0 ? parseFloat(((amount / total) * 100).toFixed(2)) : 0;
       categoryStats[key] = {
         amount,
         percentage,
