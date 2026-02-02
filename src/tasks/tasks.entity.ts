@@ -64,17 +64,18 @@ export class Task {
   @ApiProperty({
     description: '时间周期',
     enum: TaskTimePeriod,
+    name: 'timePeriod',
   })
   @Expose({ name: 'timePeriod' })
   @Column({ type: 'enum', enum: TaskTimePeriod, default: TaskTimePeriod.Week })
   time_period: TaskTimePeriod;
 
-  @ApiProperty({ description: '创建时间' })
+  @ApiProperty({ description: '创建时间', name: 'createdAt' })
   @Expose({ name: 'createdAt' })
   @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty({ description: '更新时间' })
+  @ApiProperty({ description: '更新时间', name: 'updatedAt' })
   @Expose({ name: 'updatedAt' })
   @UpdateDateColumn()
   updated_at: Date;

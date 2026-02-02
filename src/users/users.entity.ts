@@ -22,12 +22,12 @@ export class User {
   @Column({ nullable: false, length: 255 })
   password: string;
 
-  @ApiProperty({ description: '创建时间' })
+  @ApiProperty({ description: '创建时间', name: 'createdAt' })
   @Expose({ name: 'createdAt' })
   @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty({ description: '更新时间' })
+  @ApiProperty({ description: '更新时间', name: 'updatedAt' })
   @Expose({ name: 'updatedAt' })
   @UpdateDateColumn()
   updated_at: Date;

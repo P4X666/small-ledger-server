@@ -42,12 +42,7 @@ export class SavingsGoalsController {
   @Get()
   @ApiOperation({ summary: '获取所有攒钱目标' })
   @ApiOkPaginatedResponse(SavingsGoal, {
-    sortableColumns: [
-      'id',
-      'name',
-      'status',
-      'created_at',
-    ],
+    sortableColumns: ['id', 'name', 'status', 'created_at'],
     searchableColumns: ['name', 'description'],
   })
   async findAll(
@@ -58,12 +53,7 @@ export class SavingsGoalsController {
       query,
       this.savingsGoalsService.getSavingsGoalsQueryBuilder(user.id),
       {
-        sortableColumns: [
-          'id',
-          'name',
-          'status',
-          'created_at',
-        ],
+        sortableColumns: ['id', 'name', 'status', 'created_at'],
         searchableColumns: ['name', 'description'],
       },
     );

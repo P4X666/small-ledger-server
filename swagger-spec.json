@@ -307,7 +307,42 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedDocumented"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Task"
+                          }
+                        },
+                        "meta": {
+                          "properties": {
+                            "select": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "filter": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         },
         "summary": "获取所有任务",
@@ -558,7 +593,42 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedDocumented"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Task"
+                          }
+                        },
+                        "meta": {
+                          "properties": {
+                            "select": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "filter": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         },
         "summary": "获取已删除任务",
@@ -765,14 +835,39 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "获取成功",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SavingsGoal"
-                  }
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedDocumented"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/SavingsGoal"
+                          }
+                        },
+                        "meta": {
+                          "properties": {
+                            "select": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "filter": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1034,12 +1129,12 @@
             "type": "string",
             "description": "用户名"
           },
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "type": "string",
             "description": "创建时间"
           },
-          "updated_at": {
+          "updatedAt": {
             "format": "date-time",
             "type": "string",
             "description": "更新时间"
@@ -1048,8 +1143,8 @@
         "required": [
           "id",
           "username",
-          "created_at",
-          "updated_at"
+          "createdAt",
+          "updatedAt"
         ]
       },
       "LoginUserDto": {
@@ -1177,7 +1272,7 @@
             "type": "number",
             "description": "紧急程度"
           },
-          "time_period": {
+          "timePeriod": {
             "type": "string",
             "description": "时间周期",
             "enum": [
@@ -1186,12 +1281,12 @@
               "year"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "type": "string",
             "description": "创建时间"
           },
-          "updated_at": {
+          "updatedAt": {
             "format": "date-time",
             "type": "string",
             "description": "更新时间"
@@ -1209,10 +1304,141 @@
           "priority",
           "importance",
           "urgency",
-          "time_period",
-          "created_at",
-          "updated_at",
+          "timePeriod",
+          "createdAt",
+          "updatedAt",
           "isDeleted"
+        ]
+      },
+      "PaginatedMetaDocumented": {
+        "type": "object",
+        "properties": {
+          "itemsPerPage": {
+            "type": "number",
+            "title": "Number of items per page"
+          },
+          "totalItems": {
+            "type": "number",
+            "title": "Total number of items"
+          },
+          "currentPage": {
+            "type": "number",
+            "title": "Current requested page"
+          },
+          "totalPages": {
+            "type": "number",
+            "title": "Total number of pages"
+          },
+          "sortBy": {
+            "type": "array",
+            "title": "Sorting by columns",
+            "items": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ASC",
+                      "DESC"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "searchBy": {
+            "title": "Search by fields",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "search": {
+            "type": "string",
+            "title": "Search term"
+          },
+          "select": {
+            "title": "List of selected fields",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "filter": {
+            "type": "object",
+            "title": "Filters that applied to the query",
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "itemsPerPage",
+          "totalItems",
+          "currentPage",
+          "totalPages"
+        ]
+      },
+      "PaginatedLinksDocumented": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "string",
+            "title": "Link to first page"
+          },
+          "previous": {
+            "type": "string",
+            "title": "Link to previous page"
+          },
+          "current": {
+            "type": "string",
+            "title": "Link to current page"
+          },
+          "next": {
+            "type": "string",
+            "title": "Link to next page"
+          },
+          "last": {
+            "type": "string",
+            "title": "Link to last page"
+          }
+        }
+      },
+      "PaginatedDocumented": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "title": "Array of entities",
+            "additionalProperties": false,
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "meta": {
+            "title": "Pagination Metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginatedMetaDocumented"
+              }
+            ]
+          },
+          "links": {
+            "title": "Links to pages",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginatedLinksDocumented"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "meta",
+          "links"
         ]
       },
       "UpdateTaskDto": {
@@ -1316,7 +1542,7 @@
             "type": "number",
             "description": "交易记录ID"
           },
-          "bill_id": {
+          "billId": {
             "type": "string",
             "description": "账单ID"
           },
@@ -1357,27 +1583,27 @@
             "type": "string",
             "description": "交易描述"
           },
-          "transaction_date": {
+          "transactionDate": {
             "format": "date-time",
             "type": "string",
             "description": "交易日期"
           },
-          "transaction_start_date": {
+          "transactionStartDate": {
             "format": "date-time",
             "type": "string",
             "description": "交易开始日期"
           },
-          "transaction_end_date": {
+          "transactionEndDate": {
             "format": "date-time",
             "type": "string",
             "description": "交易结束日期"
           },
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "type": "string",
             "description": "创建时间"
           },
-          "updated_at": {
+          "updatedAt": {
             "format": "date-time",
             "type": "string",
             "description": "更新时间"
@@ -1385,7 +1611,7 @@
         },
         "required": [
           "id",
-          "bill_id",
+          "billId",
           "platform",
           "shop",
           "product",
@@ -1393,11 +1619,11 @@
           "amount",
           "category",
           "description",
-          "transaction_date",
-          "transaction_start_date",
-          "transaction_end_date",
-          "created_at",
-          "updated_at"
+          "transactionDate",
+          "transactionStartDate",
+          "transactionEndDate",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "TransactionStatisticsDto": {
@@ -1507,11 +1733,11 @@
             "type": "string",
             "description": "攒钱目标名称"
           },
-          "target_amount": {
+          "targetAmount": {
             "type": "number",
             "description": "目标金额"
           },
-          "current_amount": {
+          "currentAmount": {
             "type": "number",
             "description": "当前金额"
           },
@@ -1525,12 +1751,12 @@
               "yearly"
             ]
           },
-          "start_date": {
+          "startDate": {
             "format": "date-time",
             "type": "string",
             "description": "开始日期"
           },
-          "end_date": {
+          "endDate": {
             "format": "date-time",
             "type": "string",
             "description": "结束日期"
@@ -1548,12 +1774,12 @@
             "type": "string",
             "description": "描述"
           },
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "type": "string",
             "description": "创建时间"
           },
-          "updated_at": {
+          "updatedAt": {
             "format": "date-time",
             "type": "string",
             "description": "更新时间"
@@ -1562,15 +1788,15 @@
         "required": [
           "id",
           "name",
-          "target_amount",
-          "current_amount",
+          "targetAmount",
+          "currentAmount",
           "period",
-          "start_date",
-          "end_date",
+          "startDate",
+          "endDate",
           "status",
           "description",
-          "created_at",
-          "updated_at"
+          "createdAt",
+          "updatedAt"
         ]
       },
       "UpdateSavingsGoalDto": {

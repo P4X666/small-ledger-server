@@ -27,7 +27,7 @@ export class Transaction {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ApiProperty({ description: '账单ID' })
+  @ApiProperty({ description: '账单ID', name: 'billId' })
   @Expose({ name: 'billId' })
   @Column()
   bill_id: string;
@@ -66,7 +66,7 @@ export class Transaction {
   @Column({ nullable: true })
   description: string;
 
-  @ApiProperty({ description: '交易日期' })
+  @ApiProperty({ description: '交易日期', name: 'transactionDate' })
   @Expose({ name: 'transactionDate' })
   @Column({
     name: 'transaction_date',
@@ -76,7 +76,7 @@ export class Transaction {
   })
   transaction_date: Date;
 
-  @ApiProperty({ description: '交易开始日期' })
+  @ApiProperty({ description: '交易开始日期', name: 'transactionStartDate' })
   @Expose({ name: 'transactionStartDate' })
   @Column({
     type: 'datetime', // 明确类型，避免默认值歧义
@@ -84,7 +84,7 @@ export class Transaction {
   })
   transaction_start_date: Date;
 
-  @ApiProperty({ description: '交易结束日期' })
+  @ApiProperty({ description: '交易结束日期', name: 'transactionEndDate' })
   @Expose({ name: 'transactionEndDate' })
   @Column({
     type: 'datetime', // 明确类型，避免默认值歧义
@@ -92,12 +92,12 @@ export class Transaction {
   })
   transaction_end_date: Date;
 
-  @ApiProperty({ description: '创建时间' })
+  @ApiProperty({ description: '创建时间', name: 'createdAt' })
   @Expose({ name: 'createdAt' })
   @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty({ description: '更新时间' })
+  @ApiProperty({ description: '更新时间', name: 'updatedAt' })
   @Expose({ name: 'updatedAt' })
   @UpdateDateColumn()
   updated_at: Date;

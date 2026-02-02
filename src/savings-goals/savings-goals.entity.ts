@@ -31,12 +31,12 @@ export class SavingsGoal {
   @Column()
   name: string;
 
-  @ApiProperty({ description: '目标金额' })
+  @ApiProperty({ description: '目标金额', name: 'targetAmount' })
   @Expose({ name: 'targetAmount' })
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   target_amount: number;
 
-  @ApiProperty({ description: '当前金额' })
+  @ApiProperty({ description: '当前金额', name: 'currentAmount' })
   @Expose({ name: 'currentAmount' })
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   current_amount: number;
@@ -51,12 +51,12 @@ export class SavingsGoal {
   })
   period: SavingsGoalPeriod;
 
-  @ApiProperty({ description: '开始日期' })
+  @ApiProperty({ description: '开始日期', name: 'startDate' })
   @Expose({ name: 'startDate' })
   @Column()
   start_date: Date;
 
-  @ApiProperty({ description: '结束日期' })
+  @ApiProperty({ description: '结束日期', name: 'endDate' })
   @Expose({ name: 'endDate' })
   @Column()
   end_date: Date;
@@ -76,12 +76,12 @@ export class SavingsGoal {
   @Column({ nullable: true })
   description?: string;
 
-  @ApiProperty({ description: '创建时间' })
+  @ApiProperty({ description: '创建时间', name: 'createdAt' })
   @Expose({ name: 'createdAt' })
   @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty({ description: '更新时间' })
+  @ApiProperty({ description: '更新时间', name: 'updatedAt' })
   @Expose({ name: 'updatedAt' })
   @UpdateDateColumn()
   updated_at: Date;
