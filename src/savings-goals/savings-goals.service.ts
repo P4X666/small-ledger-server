@@ -38,6 +38,14 @@ export class SavingsGoalsService {
     });
   }
 
+  // 获取攒钱目标查询构建器（支持分页）
+  getSavingsGoalsQueryBuilder(user_id: number) {
+    return this.savingsGoalsRepository
+      .createQueryBuilder('savingsGoal')
+      .where('savingsGoal.user_id = :user_id', { user_id })
+      .orderBy('savingsGoal.created_at', 'DESC');
+  }
+
   // 根据ID获取攒钱目标
   async findOne(id: number, user_id: number): Promise<SavingsGoal> {
     const savingsGoal = await this.savingsGoalsRepository.findOne({

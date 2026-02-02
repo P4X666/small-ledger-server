@@ -57,7 +57,11 @@ export class TransactionsController {
 
   @Get('statistics')
   @ApiOperation({ summary: '获取交易统计' })
-  @ApiResponse({ status: 200, description: '获取成功', type: TransactionStatisticsDto })
+  @ApiResponse({
+    status: 200,
+    description: '获取成功',
+    type: TransactionStatisticsDto,
+  })
   async getStatistics(
     @GetCurrentUser() user: User,
   ): Promise<TransactionStatisticsDto> {

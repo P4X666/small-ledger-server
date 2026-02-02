@@ -9,6 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { Paginate, paginate, ApiOkPaginatedResponse } from 'nestjs-paginate';
+import type { PaginateQuery } from 'nestjs-paginate';
 import { SavingsGoalsService } from './savings-goals.service';
 import {
   CreateSavingsGoalDto,
@@ -39,9 +41,32 @@ export class SavingsGoalsController {
 
   @Get()
   @ApiOperation({ summary: '获取所有攒钱目标' })
-  @ApiResponse({ status: 200, description: '获取成功', type: [SavingsGoal] })
-  async findAll(@GetCurrentUser() user: User): Promise<SavingsGoal[]> {
-    return this.savingsGoalsService.findAllByUserId(user.id);
+  @ApiOkPaginatedResponse(SavingsGoal, {
+    sortableColumns: [
+      'id',
+      'name',
+      'status',
+      'created_at',
+    ],
+    searchableColumns: ['name', 'description'],
+  })
+  async findAll(
+    @Paginate() query: PaginateQuery,
+    @GetCurrentUser() user: User,
+  ) {
+    return paginate(
+      query,
+      this.savingsGoalsService.getSavingsGoalsQueryBuilder(user.id),
+      {
+        sortableColumns: [
+          'id',
+          'name',
+          'status',
+          'created_at',
+        ],
+        searchableColumns: ['name', 'description'],
+      },
+    );
   }
 
   @Get(':id')

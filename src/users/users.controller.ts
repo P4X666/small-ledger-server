@@ -31,7 +31,14 @@ export class UsersController {
   // 用户登录
   @Post('login')
   @ApiOperation({ summary: '用户登录' })
-  @ApiResponse({ status: 200, description: '登录成功', schema: { type: 'object', properties: { access_token: { type: 'string' } } } })
+  @ApiResponse({
+    status: 200,
+    description: '登录成功',
+    schema: {
+      type: 'object',
+      properties: { access_token: { type: 'string' } },
+    },
+  })
   @HttpCode(200)
   async login(
     @Body() loginUserDto: LoginUserDto,

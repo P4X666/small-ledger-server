@@ -35,9 +35,9 @@ export class Task {
   @Column({ nullable: true })
   description: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: '任务状态',
-    enum: TaskStatus 
+    enum: TaskStatus,
   })
   @Column({
     type: 'enum',
@@ -46,9 +46,9 @@ export class Task {
   })
   status: TaskStatus;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: '任务优先级',
-    enum: TaskPriority 
+    enum: TaskPriority,
   })
   @Column({ type: 'enum', enum: TaskPriority, default: TaskPriority.Medium })
   priority: TaskPriority;
@@ -61,9 +61,9 @@ export class Task {
   @Column({ type: 'tinyint', default: 3, unsigned: true })
   urgency: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: '时间周期',
-    enum: TaskTimePeriod 
+    enum: TaskTimePeriod,
   })
   @Expose({ name: 'timePeriod' })
   @Column({ type: 'enum', enum: TaskTimePeriod, default: TaskTimePeriod.Week })

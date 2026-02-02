@@ -16,7 +16,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { Paginate, paginate } from 'nestjs-paginate';
+import { Paginate, paginate, ApiOkPaginatedResponse } from 'nestjs-paginate';
 import type { PaginateQuery } from 'nestjs-paginate';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto, UpdateTaskDto, UpdateTaskStatusDto } from './tasks.dto';
@@ -44,7 +44,16 @@ export class TasksController {
 
   @Get()
   @ApiOperation({ summary: '获取所有任务' })
-  @ApiQuery({ name: 'timePeriod', required: false, description: '时间周期', enum: TaskTimePeriod })
+  @ApiQuery({
+    name: 'timePeriod',
+    required: false,
+    description: '时间周期',
+    enum: TaskTimePeriod,
+  })
+  @ApiOkPaginatedResponse(Task, {
+    sortableColumns: ['id', 'title', 'status', 'importance', 'urgency'],
+    searchableColumns: ['title', 'description'],
+  })
   async findAll(
     @Paginate() query: PaginateQuery,
     @Query('timePeriod') timePeriod: TaskTimePeriod,
@@ -140,8 +149,29 @@ export class TasksController {
 
   @Get('deleted')
   @ApiOperation({ summary: '获取已删除任务' })
-  @ApiQuery({ name: 'status', required: false, description: '状态', enum: TaskStatus })
-  @ApiQuery({ name: 'timePeriod', required: false, description: '时间周期', enum: TaskTimePeriod })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: '状态',
+    enum: TaskStatus,
+  })
+  @ApiQuery({
+    name: 'timePeriod',
+    required: false,
+    description: '时间周期',
+    enum: TaskTimePeriod,
+  })
+  @ApiOkPaginatedResponse(Task, {
+    sortableColumns: [
+      'id',
+      'title',
+      'status',
+      'importance',
+      'urgency',
+      'updated_at',
+    ],
+    searchableColumns: ['title', 'description'],
+  })
   async findDeletedTasks(
     @Paginate() query: PaginateQuery,
     @Query('status') status: TaskStatus,

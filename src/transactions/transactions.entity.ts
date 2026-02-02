@@ -32,9 +32,9 @@ export class Transaction {
   @Column()
   bill_id: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: '支付平台',
-    enum: PayType 
+    enum: PayType,
   })
   @Column({ type: 'enum', enum: PayType })
   platform: string;
@@ -47,9 +47,9 @@ export class Transaction {
   @Column()
   product: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: '交易类型',
-    enum: BillCategory 
+    enum: BillCategory,
   })
   @Column({ type: 'enum', enum: BillCategory, default: BillCategory.Neutral })
   type: BillCategory;
