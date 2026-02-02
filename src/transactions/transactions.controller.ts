@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Paginate, paginate } from 'nestjs-paginate';
 import type { PaginateQuery } from 'nestjs-paginate';
 import { TransactionsService } from './transactions.service';
@@ -21,12 +22,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetCurrentUser } from '../auth/get-current-user.decorator';
 import { User } from '../users/users.entity';
 
+@ApiTags('Transactions')
 @Controller('api/transactions')
 @UseGuards(JwtAuthGuard)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post()
+  @ApiOperation({ summary: '创建交易记录' })
+  @ApiResponse({ status: 201, description: '创建成功', type: Transaction })
   async create(
     @Body() createTransactionDto: CreateTransactionDto,
     @GetCurrentUser() user: User,
@@ -35,6 +39,7 @@ export class TransactionsController {
   }
 
   @Get()
+  @ApiOperation({ summary: '获取所有交易记录' })
   async findAll(
     @Paginate() query: PaginateQuery,
     @GetCurrentUser() user: User,
@@ -51,6 +56,8 @@ export class TransactionsController {
   }
 
   @Get('statistics')
+  @ApiOperation({ summary: '获取交易统计' })
+  @ApiResponse({ status: 200, description: '获取成功', type: TransactionStatisticsDto })
   async getStatistics(
     @GetCurrentUser() user: User,
   ): Promise<TransactionStatisticsDto> {
@@ -58,6 +65,9 @@ export class TransactionsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: '获取单个交易记录' })
+  @ApiParam({ name: 'id', description: '交易记录ID' })
+  @ApiResponse({ status: 200, description: '获取成功', type: Transaction })
   async findOne(
     @Param('id') id: string,
     @GetCurrentUser() user: User,
@@ -66,6 +76,9 @@ export class TransactionsController {
   }
 
   @Put(':id')
+  @ApiOperation({ summary: '更新交易记录' })
+  @ApiParam({ name: 'id', description: '交易记录ID' })
+  @ApiResponse({ status: 200, description: '更新成功', type: Transaction })
   async update(
     @Param('id') id: string,
     @Body() updateTransactionDto: UpdateTransactionDto,
@@ -75,6 +88,9 @@ export class TransactionsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: '删除交易记录' })
+  @ApiParam({ name: 'id', description: '交易记录ID' })
+  @ApiResponse({ status: 200, description: '删除成功' })
   async remove(
     @Param('id') id: string,
     @GetCurrentUser() user: User,

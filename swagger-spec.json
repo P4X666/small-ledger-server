@@ -1,1 +1,1608 @@
-{"openapi":"3.0.0","paths":{"/":{"get":{"operationId":"AppController_getHello","parameters":[],"responses":{"200":{"description":""}},"tags":["App"]}},"/health":{"get":{"operationId":"AppController_getHealth","parameters":[],"responses":{"200":{"description":""}},"tags":["App"]}},"/api/users/register":{"post":{"operationId":"UsersController_register","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/RegisterUserDto"}}}},"responses":{"201":{"description":""}},"tags":["Users"]}},"/api/users/login":{"post":{"operationId":"UsersController_login","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/LoginUserDto"}}}},"responses":{"200":{"description":""}},"tags":["Users"]}},"/api/users":{"get":{"operationId":"UsersController_findAll","parameters":[],"responses":{"200":{"description":""}},"tags":["Users"]}},"/api/users/{id}":{"get":{"operationId":"UsersController_findOne","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Users"]},"put":{"operationId":"UsersController_update","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateUserDto"}}}},"responses":{"200":{"description":""}},"tags":["Users"]},"delete":{"operationId":"UsersController_remove","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Users"]}},"/api/auth/register":{"post":{"operationId":"AuthController_register","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/RegisterUserDto"}}}},"responses":{"201":{"description":""}},"tags":["Auth"]}},"/api/auth/login":{"post":{"operationId":"AuthController_login","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/LoginUserDto"}}}},"responses":{"200":{"description":""}},"tags":["Auth"]}},"/api/tasks":{"post":{"operationId":"TasksController_create","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateTaskDto"}}}},"responses":{"201":{"description":""}},"tags":["Tasks"]},"get":{"operationId":"TasksController_findAll","parameters":[{"name":"timePeriod","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Tasks"]}},"/api/tasks/by-time/{period}":{"get":{"operationId":"TasksController_findByTimePeriod","parameters":[{"name":"period","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Tasks"]}},"/api/tasks/by-quadrant":{"get":{"operationId":"TasksController_findByQuadrant","parameters":[],"responses":{"200":{"description":""}},"tags":["Tasks"]}},"/api/tasks/getTasksNum":{"get":{"operationId":"TasksController_getTasksStatistics","parameters":[],"responses":{"200":{"description":""}},"tags":["Tasks"]}},"/api/tasks/{id}":{"get":{"operationId":"TasksController_findOne","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Tasks"]},"put":{"operationId":"TasksController_update","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateTaskDto"}}}},"responses":{"200":{"description":""}},"tags":["Tasks"]},"delete":{"operationId":"TasksController_remove","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Tasks"]}},"/api/tasks/{id}/status":{"put":{"operationId":"TasksController_updateStatus","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateTaskStatusDto"}}}},"responses":{"200":{"description":""}},"tags":["Tasks"]}},"/api/tasks/deleted":{"get":{"operationId":"TasksController_findDeletedTasks","parameters":[{"name":"status","required":true,"in":"query","schema":{"type":"string"}},{"name":"timePeriod","required":true,"in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Tasks"]}},"/api/transactions":{"post":{"operationId":"TransactionsController_create","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateTransactionDto"}}}},"responses":{"201":{"description":""}},"tags":["Transactions"]},"get":{"operationId":"TransactionsController_findAll","parameters":[],"responses":{"200":{"description":""}},"tags":["Transactions"]}},"/api/transactions/statistics":{"get":{"operationId":"TransactionsController_getStatistics","parameters":[],"responses":{"200":{"description":""}},"tags":["Transactions"]}},"/api/transactions/{id}":{"get":{"operationId":"TransactionsController_findOne","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Transactions"]},"put":{"operationId":"TransactionsController_update","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateTransactionDto"}}}},"responses":{"200":{"description":""}},"tags":["Transactions"]},"delete":{"operationId":"TransactionsController_remove","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["Transactions"]}},"/api/savings-goals":{"post":{"operationId":"SavingsGoalsController_create","parameters":[],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateSavingsGoalDto"}}}},"responses":{"201":{"description":""}},"tags":["SavingsGoals"]},"get":{"operationId":"SavingsGoalsController_findAll","parameters":[],"responses":{"200":{"description":""}},"tags":["SavingsGoals"]}},"/api/savings-goals/{id}":{"get":{"operationId":"SavingsGoalsController_findOne","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["SavingsGoals"]},"put":{"operationId":"SavingsGoalsController_update","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateSavingsGoalDto"}}}},"responses":{"200":{"description":""}},"tags":["SavingsGoals"]},"delete":{"operationId":"SavingsGoalsController_remove","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["SavingsGoals"]}},"/api/savings-goals/{id}/amount":{"put":{"operationId":"SavingsGoalsController_updateAmount","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateSavingsGoalAmountDto"}}}},"responses":{"200":{"description":""}},"tags":["SavingsGoals"]}},"/api/savings-goals/{id}/progress":{"get":{"operationId":"SavingsGoalsController_getProgress","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"tags":["SavingsGoals"]}},"/excel/upload":{"post":{"operationId":"ExcelController_uploadFile","parameters":[{"name":"content-type","required":true,"in":"header","schema":{"type":"string"}},{"name":"content-disposition","required":true,"in":"header","schema":{"type":"string"}}],"responses":{"201":{"description":""}},"tags":["Excel"]}}},"info":{"title":"small-ledger API","description":"家有小账本服务端API文档","version":"1.0","contact":{}},"tags":[],"servers":[],"components":{"schemas":{"RegisterUserDto":{"type":"object","properties":{}},"LoginUserDto":{"type":"object","properties":{}},"UpdateUserDto":{"type":"object","properties":{}},"CreateTaskDto":{"type":"object","properties":{}},"UpdateTaskDto":{"type":"object","properties":{}},"UpdateTaskStatusDto":{"type":"object","properties":{}},"CreateTransactionDto":{"type":"object","properties":{}},"UpdateTransactionDto":{"type":"object","properties":{}},"CreateSavingsGoalDto":{"type":"object","properties":{}},"UpdateSavingsGoalDto":{"type":"object","properties":{}},"UpdateSavingsGoalAmountDto":{"type":"object","properties":{}}}}}
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "AppController_getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/api/users/register": {
+      "post": {
+        "operationId": "UsersController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "summary": "用户注册",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/login": {
+      "post": {
+        "operationId": "UsersController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "用户登录",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "UsersController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "获取所有用户",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "operationId": "UsersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "用户ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "summary": "获取单个用户",
+        "tags": [
+          "Users"
+        ]
+      },
+      "put": {
+        "operationId": "UsersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "用户ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "summary": "更新用户",
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "用户ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          }
+        },
+        "summary": "删除用户",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/tasks": {
+      "post": {
+        "operationId": "TasksController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          }
+        },
+        "summary": "创建任务",
+        "tags": [
+          "Tasks"
+        ]
+      },
+      "get": {
+        "operationId": "TasksController_findAll",
+        "parameters": [
+          {
+            "name": "timePeriod",
+            "required": false,
+            "in": "query",
+            "description": "时间周期",
+            "schema": {
+              "enum": [
+                "week",
+                "month",
+                "year"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "获取所有任务",
+        "tags": [
+          "Tasks"
+        ]
+      }
+    },
+    "/api/tasks/by-time/{period}": {
+      "get": {
+        "operationId": "TasksController_findByTimePeriod",
+        "parameters": [
+          {
+            "name": "period",
+            "required": true,
+            "in": "path",
+            "description": "时间周期",
+            "schema": {
+              "enum": [
+                "week",
+                "month",
+                "year"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "按时间周期获取任务",
+        "tags": [
+          "Tasks"
+        ]
+      }
+    },
+    "/api/tasks/by-quadrant": {
+      "get": {
+        "operationId": "TasksController_findByQuadrant",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "按四象限获取任务",
+        "tags": [
+          "Tasks"
+        ]
+      }
+    },
+    "/api/tasks/getTasksNum": {
+      "get": {
+        "operationId": "TasksController_getTasksStatistics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "获取任务统计",
+        "tags": [
+          "Tasks"
+        ]
+      }
+    },
+    "/api/tasks/{id}": {
+      "get": {
+        "operationId": "TasksController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "任务ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          }
+        },
+        "summary": "获取单个任务",
+        "tags": [
+          "Tasks"
+        ]
+      },
+      "put": {
+        "operationId": "TasksController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "任务ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          }
+        },
+        "summary": "更新任务",
+        "tags": [
+          "Tasks"
+        ]
+      },
+      "delete": {
+        "operationId": "TasksController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "任务ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          }
+        },
+        "summary": "删除任务",
+        "tags": [
+          "Tasks"
+        ]
+      }
+    },
+    "/api/tasks/{id}/status": {
+      "put": {
+        "operationId": "TasksController_updateStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "任务ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          }
+        },
+        "summary": "更新任务状态",
+        "tags": [
+          "Tasks"
+        ]
+      }
+    },
+    "/api/tasks/deleted": {
+      "get": {
+        "operationId": "TasksController_findDeletedTasks",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "状态",
+            "schema": {
+              "enum": [
+                "pending",
+                "in_progress",
+                "completed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "timePeriod",
+            "required": false,
+            "in": "query",
+            "description": "时间周期",
+            "schema": {
+              "enum": [
+                "week",
+                "month",
+                "year"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "获取已删除任务",
+        "tags": [
+          "Tasks"
+        ]
+      }
+    },
+    "/api/transactions": {
+      "post": {
+        "operationId": "TransactionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransactionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          }
+        },
+        "summary": "创建交易记录",
+        "tags": [
+          "Transactions"
+        ]
+      },
+      "get": {
+        "operationId": "TransactionsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "获取所有交易记录",
+        "tags": [
+          "Transactions"
+        ]
+      }
+    },
+    "/api/transactions/statistics": {
+      "get": {
+        "operationId": "TransactionsController_getStatistics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionStatisticsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "获取交易统计",
+        "tags": [
+          "Transactions"
+        ]
+      }
+    },
+    "/api/transactions/{id}": {
+      "get": {
+        "operationId": "TransactionsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "交易记录ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          }
+        },
+        "summary": "获取单个交易记录",
+        "tags": [
+          "Transactions"
+        ]
+      },
+      "put": {
+        "operationId": "TransactionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "交易记录ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          }
+        },
+        "summary": "更新交易记录",
+        "tags": [
+          "Transactions"
+        ]
+      },
+      "delete": {
+        "operationId": "TransactionsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "交易记录ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          }
+        },
+        "summary": "删除交易记录",
+        "tags": [
+          "Transactions"
+        ]
+      }
+    },
+    "/api/savings-goals": {
+      "post": {
+        "operationId": "SavingsGoalsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSavingsGoalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoal"
+                }
+              }
+            }
+          }
+        },
+        "summary": "创建攒钱目标",
+        "tags": [
+          "SavingsGoals"
+        ]
+      },
+      "get": {
+        "operationId": "SavingsGoalsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavingsGoal"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "获取所有攒钱目标",
+        "tags": [
+          "SavingsGoals"
+        ]
+      }
+    },
+    "/api/savings-goals/{id}": {
+      "get": {
+        "operationId": "SavingsGoalsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "攒钱目标ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoal"
+                }
+              }
+            }
+          }
+        },
+        "summary": "获取单个攒钱目标",
+        "tags": [
+          "SavingsGoals"
+        ]
+      },
+      "put": {
+        "operationId": "SavingsGoalsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "攒钱目标ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSavingsGoalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoal"
+                }
+              }
+            }
+          }
+        },
+        "summary": "更新攒钱目标",
+        "tags": [
+          "SavingsGoals"
+        ]
+      },
+      "delete": {
+        "operationId": "SavingsGoalsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "攒钱目标ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          }
+        },
+        "summary": "删除攒钱目标",
+        "tags": [
+          "SavingsGoals"
+        ]
+      }
+    },
+    "/api/savings-goals/{id}/amount": {
+      "put": {
+        "operationId": "SavingsGoalsController_updateAmount",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "攒钱目标ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSavingsGoalAmountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoal"
+                }
+              }
+            }
+          }
+        },
+        "summary": "更新攒钱目标金额",
+        "tags": [
+          "SavingsGoals"
+        ]
+      }
+    },
+    "/api/savings-goals/{id}/progress": {
+      "get": {
+        "operationId": "SavingsGoalsController_getProgress",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "攒钱目标ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoalProgressDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "获取攒钱目标进度",
+        "tags": [
+          "SavingsGoals"
+        ]
+      }
+    },
+    "/excel/upload": {
+      "post": {
+        "operationId": "ExcelController_uploadFile",
+        "parameters": [
+          {
+            "name": "content-type",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "content-disposition",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Excel"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "small-ledger API",
+    "description": "家有小账本服务端API文档",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "RegisterUserDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "minLength": 3,
+            "maxLength": 50
+          },
+          "password": {
+            "type": "string",
+            "description": "密码",
+            "minLength": 6,
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "用户ID"
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "LoginUserDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "minLength": 3,
+            "maxLength": 50
+          },
+          "password": {
+            "type": "string",
+            "description": "密码",
+            "minLength": 6,
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateTaskDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "任务标题"
+          },
+          "description": {
+            "type": "string",
+            "description": "任务描述"
+          },
+          "status": {
+            "type": "string",
+            "description": "任务状态",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "description": "任务优先级",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "importance": {
+            "type": "number",
+            "description": "任务重要性",
+            "minimum": 1,
+            "maximum": 4,
+            "default": 3
+          },
+          "urgency": {
+            "type": "number",
+            "description": "任务紧急性",
+            "minimum": 1,
+            "maximum": 4,
+            "default": 3
+          },
+          "timePeriod": {
+            "type": "string",
+            "description": "任务时间周期",
+            "enum": [
+              "week",
+              "month",
+              "year"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "importance",
+          "urgency"
+        ]
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "任务ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "任务标题"
+          },
+          "description": {
+            "type": "string",
+            "description": "任务描述"
+          },
+          "status": {
+            "type": "string",
+            "description": "任务状态",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "description": "任务优先级",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "importance": {
+            "type": "number",
+            "description": "重要程度"
+          },
+          "urgency": {
+            "type": "number",
+            "description": "紧急程度"
+          },
+          "time_period": {
+            "type": "string",
+            "description": "时间周期",
+            "enum": [
+              "week",
+              "month",
+              "year"
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "description": "是否删除"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "status",
+          "priority",
+          "importance",
+          "urgency",
+          "time_period",
+          "created_at",
+          "updated_at",
+          "isDeleted"
+        ]
+      },
+      "UpdateTaskDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateTaskStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "任务状态",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreateTransactionDto": {
+        "type": "object",
+        "properties": {
+          "billId": {
+            "type": "string",
+            "description": "账单ID"
+          },
+          "platform": {
+            "type": "string",
+            "description": "支付平台",
+            "enum": [
+              "alipay",
+              "wechat_pay"
+            ]
+          },
+          "shop": {
+            "type": "string",
+            "description": "商店名称"
+          },
+          "product": {
+            "type": "string",
+            "description": "产品名称"
+          },
+          "type": {
+            "type": "string",
+            "description": "交易类型",
+            "enum": [
+              "income",
+              "expense",
+              "neutral"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "description": "交易金额",
+            "minimum": 0.01
+          },
+          "category": {
+            "type": "string",
+            "description": "交易分类"
+          },
+          "description": {
+            "type": "string",
+            "description": "交易描述"
+          },
+          "transactionDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "交易日期"
+          },
+          "transactionStartDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "交易开始日期"
+          },
+          "transactionEndDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "交易结束日期"
+          }
+        },
+        "required": [
+          "billId",
+          "platform",
+          "shop",
+          "product",
+          "type",
+          "amount",
+          "category",
+          "transactionStartDate",
+          "transactionEndDate"
+        ]
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "交易记录ID"
+          },
+          "bill_id": {
+            "type": "string",
+            "description": "账单ID"
+          },
+          "platform": {
+            "type": "string",
+            "description": "支付平台",
+            "enum": [
+              "alipay",
+              "wechat_pay"
+            ]
+          },
+          "shop": {
+            "type": "string",
+            "description": "店铺名称"
+          },
+          "product": {
+            "type": "string",
+            "description": "产品名称"
+          },
+          "type": {
+            "type": "string",
+            "description": "交易类型",
+            "enum": [
+              "income",
+              "expense",
+              "neutral"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "description": "交易金额"
+          },
+          "category": {
+            "type": "string",
+            "description": "交易分类"
+          },
+          "description": {
+            "type": "string",
+            "description": "交易描述"
+          },
+          "transaction_date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "交易日期"
+          },
+          "transaction_start_date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "交易开始日期"
+          },
+          "transaction_end_date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "交易结束日期"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          }
+        },
+        "required": [
+          "id",
+          "bill_id",
+          "platform",
+          "shop",
+          "product",
+          "type",
+          "amount",
+          "category",
+          "description",
+          "transaction_date",
+          "transaction_start_date",
+          "transaction_end_date",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "TransactionStatisticsDto": {
+        "type": "object",
+        "properties": {
+          "totalIncome": {
+            "type": "number",
+            "description": "总收入"
+          },
+          "totalExpense": {
+            "type": "number",
+            "description": "总支出"
+          },
+          "totalNeutral": {
+            "type": "number",
+            "description": "总中性交易"
+          },
+          "balance": {
+            "type": "number",
+            "description": "余额"
+          },
+          "categoryStats": {
+            "type": "object",
+            "description": "分类统计"
+          }
+        },
+        "required": [
+          "totalIncome",
+          "totalExpense",
+          "totalNeutral",
+          "balance",
+          "categoryStats"
+        ]
+      },
+      "UpdateTransactionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateSavingsGoalDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "攒钱目标名称"
+          },
+          "targetAmount": {
+            "type": "number",
+            "description": "目标金额",
+            "minimum": 0.01
+          },
+          "currentAmount": {
+            "type": "number",
+            "description": "当前金额",
+            "minimum": 0,
+            "default": 0
+          },
+          "period": {
+            "type": "string",
+            "description": "攒钱周期",
+            "enum": [
+              "monthly",
+              "quarterly",
+              "half_yearly",
+              "yearly"
+            ]
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "开始日期"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "结束日期"
+          },
+          "description": {
+            "type": "string",
+            "description": "描述"
+          },
+          "status": {
+            "type": "string",
+            "description": "状态",
+            "enum": [
+              "in_progress",
+              "completed",
+              "failed"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "targetAmount",
+          "period",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "SavingsGoal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "攒钱目标ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "攒钱目标名称"
+          },
+          "target_amount": {
+            "type": "number",
+            "description": "目标金额"
+          },
+          "current_amount": {
+            "type": "number",
+            "description": "当前金额"
+          },
+          "period": {
+            "type": "string",
+            "description": "攒钱周期",
+            "enum": [
+              "monthly",
+              "quarterly",
+              "half_yearly",
+              "yearly"
+            ]
+          },
+          "start_date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "开始日期"
+          },
+          "end_date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "结束日期"
+          },
+          "status": {
+            "type": "string",
+            "description": "状态",
+            "enum": [
+              "in_progress",
+              "completed",
+              "failed"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "描述"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "target_amount",
+          "current_amount",
+          "period",
+          "start_date",
+          "end_date",
+          "status",
+          "description",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "UpdateSavingsGoalDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateSavingsGoalAmountDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SavingsGoalProgressDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "攒钱目标ID"
+          },
+          "progressPercentage": {
+            "type": "number",
+            "description": "进度百分比"
+          },
+          "daysLeft": {
+            "type": "number",
+            "description": "剩余天数"
+          }
+        },
+        "required": [
+          "id",
+          "progressPercentage",
+          "daysLeft"
+        ]
+      }
+    }
+  }
+}

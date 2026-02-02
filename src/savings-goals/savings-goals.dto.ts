@@ -1,3 +1,5 @@
+import { SavingsGoalPeriod, SavingsGoalStatus } from '@/enum';
+import { PartialType, PickType } from '@nestjs/mapped-types';
 import {
   IsString,
   IsOptional,
@@ -6,90 +8,75 @@ import {
   IsDateString,
   Min,
 } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 // 创建攒钱目标DTO
 export class CreateSavingsGoalDto {
+  @ApiProperty({ description: '攒钱目标名称' })
   @IsString()
   name: string;
 
+  @ApiProperty({ description: '目标金额', minimum: 0.01 })
   @IsNumber()
   @Min(0.01)
-  target_amount: number;
+  targetAmount: number;
 
+  @ApiPropertyOptional({ description: '当前金额', minimum: 0, default: 0 })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  current_amount?: number;
+  currentAmount?: number;
 
-  @IsEnum(['monthly', 'quarterly', 'half_yearly', 'yearly'])
-  period: 'monthly' | 'quarterly' | 'half_yearly' | 'yearly';
+  @ApiProperty({
+    description: '攒钱周期',
+    enum: SavingsGoalPeriod,
+  })
+  @IsEnum(SavingsGoalPeriod)
+  period: SavingsGoalPeriod;
 
+  @ApiProperty({ description: '开始日期' })
   @IsDateString()
-  start_date: Date;
+  startDate: Date;
 
+  @ApiProperty({ description: '结束日期' })
   @IsDateString()
-  end_date: Date;
+  endDate: Date;
 
+  @ApiPropertyOptional({ description: '描述' })
   @IsOptional()
   @IsString()
   description?: string;
 
+  @ApiPropertyOptional({
+    description: '状态',
+    enum: SavingsGoalStatus,
+  })
   @IsOptional()
-  @IsEnum(['in_progress', 'completed', 'failed'])
-  status?: 'in_progress' | 'completed' | 'failed';
+  @IsEnum(SavingsGoalStatus)
+  status?: SavingsGoalStatus;
 }
 
 // 更新攒钱目标DTO
-export class UpdateSavingsGoalDto {
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0.01)
-  target_amount?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  current_amount?: number;
-
-  @IsOptional()
-  @IsEnum(['monthly', 'quarterly', 'half_yearly', 'yearly'])
-  period?: 'monthly' | 'quarterly' | 'half_yearly' | 'yearly';
-
-  @IsOptional()
-  @IsDateString()
-  start_date?: Date;
-
-  @IsOptional()
-  @IsDateString()
-  end_date?: Date;
-
-  @IsOptional()
-  @IsEnum(['in_progress', 'completed', 'failed'])
-  status?: 'in_progress' | 'completed' | 'failed';
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-}
+export class UpdateSavingsGoalDto extends PartialType(CreateSavingsGoalDto) {}
 
 // 更新攒钱目标金额DTO
-export class UpdateSavingsGoalAmountDto {
-  @IsNumber()
-  @Min(0)
-  current_amount: number;
-}
+export class UpdateSavingsGoalAmountDto extends PickType(CreateSavingsGoalDto, [
+  'currentAmount',
+]) {}
 
 // 攒钱目标进度DTO
-export class SavingsGoalProgressDto {
+export class SavingsGoalProgressDto extends PickType(CreateSavingsGoalDto, [
+  'name',
+  'targetAmount',
+  'currentAmount',
+  'status',
+]) {
+  @ApiProperty({ description: '攒钱目标ID' })
   id: number;
-  name: string;
-  target_amount: number;
-  current_amount: number;
-  progress_percentage: number;
-  days_left: number;
-  status: 'in_progress' | 'completed' | 'failed';
+
+  @ApiProperty({ description: '进度百分比' })
+  progressPercentage: number;
+
+  @ApiProperty({ description: '剩余天数' })
+  daysLeft: number;
 }

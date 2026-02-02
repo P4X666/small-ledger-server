@@ -8,6 +8,7 @@ import {
   UpdateSavingsGoalAmountDto,
 } from '../../src/savings-goals/savings-goals.dto';
 import { NotFoundException } from '@nestjs/common';
+import { SavingsGoalPeriod, SavingsGoalStatus } from '@/enum';
 
 // Mock factory
 const mockRepository = jest.fn(() => ({
@@ -49,13 +50,13 @@ describe('SavingsGoalsService', () => {
     it('should create a new savings goal for a user', async () => {
       const createDto: CreateSavingsGoalDto = {
         name: 'Vacation Fund',
-        target_amount: 5000,
-        current_amount: 0,
-        end_date: new Date('2023-12-31'),
+        targetAmount: 5000,
+        currentAmount: 0,
+        endDate: new Date('2023-12-31'),
         description: 'Save for summer vacation',
-        status: 'in_progress',
-        period: 'monthly',
-        start_date: new Date('2023-01-01'),
+        status: SavingsGoalStatus.InProgress,
+        period: SavingsGoalPeriod.Monthly,
+        startDate: new Date('2023-01-01'),
       };
 
       const result = await savingsGoalsService.create(1, createDto);
@@ -205,7 +206,7 @@ describe('SavingsGoalsService', () => {
   describe('updateAmount', () => {
     it('should update current amount and mark as completed when target is reached', async () => {
       const updateDto: UpdateSavingsGoalAmountDto = {
-        current_amount: 5000,
+        currentAmount: 5000,
       };
 
       const mockGoal = {
@@ -221,7 +222,7 @@ describe('SavingsGoalsService', () => {
       savingsGoalsRepository.findOne.mockResolvedValue(mockGoal as any);
       savingsGoalsRepository.save.mockResolvedValue({
         ...mockGoal,
-        ...updateDto,
+        current_amount: updateDto.currentAmount,
         status: 'completed',
       } as any);
 
@@ -229,13 +230,13 @@ describe('SavingsGoalsService', () => {
 
       expect(savingsGoalsRepository.findOne).toHaveBeenCalled();
       expect(savingsGoalsRepository.save).toHaveBeenCalled();
-      expect(result.current_amount).toBe(updateDto.current_amount);
+      expect(result.current_amount).toBe(updateDto.currentAmount);
       expect(result.status).toBe('completed');
     });
 
     it('should update current amount and mark as failed when deadline passed', async () => {
       const updateDto: UpdateSavingsGoalAmountDto = {
-        current_amount: 3000,
+        currentAmount: 3000,
       };
 
       const mockGoal = {
@@ -251,7 +252,7 @@ describe('SavingsGoalsService', () => {
       savingsGoalsRepository.findOne.mockResolvedValue(mockGoal as any);
       savingsGoalsRepository.save.mockResolvedValue({
         ...mockGoal,
-        ...updateDto,
+        current_amount: updateDto.currentAmount,
         status: 'failed',
       } as any);
 
@@ -262,7 +263,7 @@ describe('SavingsGoalsService', () => {
 
     it('should keep status as in_progress when target not reached and deadline not passed', async () => {
       const updateDto: UpdateSavingsGoalAmountDto = {
-        current_amount: 3000,
+        currentAmount: 3000,
       };
 
       const mockGoal = {
@@ -278,7 +279,7 @@ describe('SavingsGoalsService', () => {
       savingsGoalsRepository.findOne.mockResolvedValue(mockGoal as any);
       savingsGoalsRepository.save.mockResolvedValue({
         ...mockGoal,
-        ...updateDto,
+        current_amount: updateDto.currentAmount,
         status: 'in_progress',
       } as any);
 
@@ -307,10 +308,10 @@ describe('SavingsGoalsService', () => {
       expect(savingsGoalsRepository.findOne).toHaveBeenCalled();
       expect(result.id).toBe(mockGoal.id);
       expect(result.name).toBe(mockGoal.name);
-      expect(result.target_amount).toBe(5000);
-      expect(result.current_amount).toBe(2500);
-      expect(result.progress_percentage).toBe(50);
-      expect(result.days_left).toBe(30);
+      expect(result.targetAmount).toBe(5000);
+      expect(result.currentAmount).toBe(2500);
+      expect(result.progressPercentage).toBeCloseTo(50);
+      expect(result.daysLeft).toBe(30);
       expect(result.status).toBe('in_progress');
     });
 
@@ -329,7 +330,7 @@ describe('SavingsGoalsService', () => {
 
       const result = await savingsGoalsService.getProgress(1, 1);
 
-      expect(result.days_left).toBe(0);
+      expect(result.daysLeft).toBe(0);
     });
 
     it('should return 0% progress when target amount is 0', async () => {
@@ -347,7 +348,7 @@ describe('SavingsGoalsService', () => {
 
       const result = await savingsGoalsService.getProgress(1, 1);
 
-      expect(result.progress_percentage).toBe(0);
+      expect(result.progressPercentage).toBe(0);
     });
   });
 });

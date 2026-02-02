@@ -1,5 +1,5 @@
-import type { CreateTransactionDto } from "@/transactions/transactions.dto";
-import type { ExcelParseResult } from "../excel.interface";
+import type { CreateTransactionDto } from '@/transactions/transactions.dto';
+import type { ExcelParseResult } from '../excel.interface';
 
 /**
  * Excel 相关事件类型

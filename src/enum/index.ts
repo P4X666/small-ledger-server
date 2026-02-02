@@ -26,3 +26,16 @@ export enum BillCategory {
   Expense = 'expense',
   Neutral = 'neutral',
 }
+
+export enum SavingsGoalStatus {
+  InProgress = 'in_progress',
+  Completed = 'completed',
+  Failed = 'failed',
+}
+
+export enum SavingsGoalPeriod {
+  Monthly = 'monthly',
+  Quarterly = 'quarterly',
+  HalfYearly = 'half_yearly',
+  Yearly = 'yearly',
+}

@@ -17,7 +17,11 @@ import { GetCurrentUser } from '../auth/get-current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { User } from '../users/users.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ExcelEventTypes, FileUploadedEvent, type FileMetadata } from './events/excel-events';
+import {
+  ExcelEventTypes,
+  FileUploadedEvent,
+  type FileMetadata,
+} from './events/excel-events';
 
 @Controller('excel')
 @UseGuards(JwtAuthGuard)

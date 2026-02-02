@@ -1,13 +1,14 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { updateGlobalConfig } from 'nestjs-paginate';
-import { writeFile } from 'fs';
 import { AppModule } from './app.module';
 import { loggerMiddleware } from './middleware/logger.middleware';
 import logger from './utils/logger';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { HttpExceptionFilter } from './utils/http-exception.filter';
+import { swaggerConfig, swaggerDocumentOptions } from './config/swagger.config';
+import { SwaggerGenerator } from './utils/swagger.generator';
 
 async function bootstrap() {
   // 设置分页插件的全局默认配置
@@ -44,20 +45,15 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   // 配置Swagger文档
-  const config = new DocumentBuilder()
-    .setTitle('small-ledger API')
-    .setDescription('家有小账本服务端API文档')
-    .setVersion('1.0')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(
+    app,
+    swaggerConfig,
+    swaggerDocumentOptions,
+  );
   SwaggerModule.setup('api-docs', app, document);
 
-  // 生成并保存Swagger JSON文档
-  writeFile('./swagger-spec.json', JSON.stringify(document), (err) => {
-    if (err) throw err;
-    console.log('Swagger 文档已保存！');
-  });
+  // 生成并保存Swagger文档
+  await SwaggerGenerator.generate(app);
 
   // 生成并保存Swagger YAML文档
   // const yamlDocument = SwaggerModule.createDocument(app, config);

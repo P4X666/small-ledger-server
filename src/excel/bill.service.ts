@@ -11,7 +11,10 @@ import utc from 'dayjs/plugin/utc'; // 如需处理时区，需安装该插件
 import { ExcelParseResult } from './excel.interface';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ExcelEventTypes } from './events/excel-events';
-import type {FileUploadedEvent,BillProcessedEvent} from './events/excel-events';
+import type {
+  FileUploadedEvent,
+  BillProcessedEvent,
+} from './events/excel-events';
 
 dayjs.extend(utc);
 
@@ -22,7 +25,7 @@ dayjs.extend(utc);
 @Injectable()
 export class BillService implements OnModuleInit {
   private readonly logger = new Logger(BillService.name);
-  
+
   constructor(
     private readonly excelService: ExcelService,
     private readonly transactionsService: TransactionsService,

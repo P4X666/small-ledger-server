@@ -9,6 +9,7 @@ import {
   UpdateSavingsGoalAmountDto,
   SavingsGoalProgressDto,
 } from './savings-goals.dto';
+import { SavingsGoalStatus } from '@/enum';
 
 @Injectable()
 export class SavingsGoalsService {
@@ -74,18 +75,18 @@ export class SavingsGoalsService {
     updateSavingsGoalAmountDto: UpdateSavingsGoalAmountDto,
   ): Promise<SavingsGoal> {
     const savingsGoal = await this.findOne(id, user_id);
-    savingsGoal.current_amount = updateSavingsGoalAmountDto.current_amount;
+    savingsGoal.current_amount = updateSavingsGoalAmountDto.currentAmount || 0;
 
     // 检查目标是否完成
     if (
       parseFloat(savingsGoal.current_amount.toString()) >=
       parseFloat(savingsGoal.target_amount.toString())
     ) {
-      savingsGoal.status = 'completed';
+      savingsGoal.status = SavingsGoalStatus.Completed;
     } else if (new Date() > savingsGoal.end_date) {
-      savingsGoal.status = 'failed';
+      savingsGoal.status = SavingsGoalStatus.Failed;
     } else {
-      savingsGoal.status = 'in_progress';
+      savingsGoal.status = SavingsGoalStatus.InProgress;
     }
 
     return this.savingsGoalsRepository.save(savingsGoal);
@@ -115,10 +116,10 @@ export class SavingsGoalsService {
     return {
       id: savingsGoal.id,
       name: savingsGoal.name,
-      target_amount: parseFloat(savingsGoal.target_amount.toString()),
-      current_amount: parseFloat(savingsGoal.current_amount.toString()),
-      progress_percentage: parseFloat(progress_percentage.toFixed(2)),
-      days_left: Math.max(0, days_left),
+      targetAmount: parseFloat(savingsGoal.target_amount.toString()),
+      currentAmount: parseFloat(savingsGoal.current_amount.toString()),
+      progressPercentage: parseFloat(progress_percentage.toFixed(2)),
+      daysLeft: Math.max(0, days_left),
       status: savingsGoal.status,
     };
   }
