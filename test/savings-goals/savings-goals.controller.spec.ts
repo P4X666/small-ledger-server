@@ -24,7 +24,6 @@ const mockSavingsGoals: SavingsGoal[] = [
     description: '购买最新款手机',
     target_amount: 8000,
     current_amount: 2000,
-    period: SavingsGoalPeriod.Monthly,
     start_date: new Date('2024-01-01'),
     end_date: new Date('2024-06-01'),
     status: SavingsGoalStatus.InProgress,
@@ -39,7 +38,6 @@ const mockSavingsGoals: SavingsGoal[] = [
     description: '去日本旅游',
     target_amount: 15000,
     current_amount: 5000,
-    period: SavingsGoalPeriod.Quarterly,
     start_date: new Date('2024-01-01'),
     end_date: new Date('2024-08-01'),
     status: SavingsGoalStatus.InProgress,
@@ -54,7 +52,6 @@ const mockSavingsGoals: SavingsGoal[] = [
     description: '首付',
     target_amount: 300000,
     current_amount: 50000,
-    period: SavingsGoalPeriod.Yearly,
     start_date: new Date('2024-01-01'),
     end_date: new Date('2025-01-01'),
     status: SavingsGoalStatus.InProgress,
@@ -69,7 +66,6 @@ const mockSavingsGoals: SavingsGoal[] = [
     description: '购买代步车',
     target_amount: 100000,
     current_amount: 30000,
-    period: SavingsGoalPeriod.Yearly,
     start_date: new Date('2024-01-01'),
     end_date: new Date('2024-12-01'),
     status: SavingsGoalStatus.InProgress,
@@ -84,7 +80,6 @@ const mockSavingsGoals: SavingsGoal[] = [
     description: '购买笔记本电脑',
     target_amount: 12000,
     current_amount: 4000,
-    period: SavingsGoalPeriod.Monthly,
     start_date: new Date('2024-01-01'),
     end_date: new Date('2024-05-01'),
     status: SavingsGoalStatus.InProgress,
@@ -136,7 +131,9 @@ describe('SavingsGoalsController', () => {
       };
 
       // 直接 mock findAll 方法
-      jest.spyOn(controller, 'findAll').mockResolvedValue(mockPaginationResult as any);
+      jest
+        .spyOn(controller, 'findAll')
+        .mockResolvedValue(mockPaginationResult as any);
 
       // 模拟分页查询参数
       const mockQuery = {
@@ -179,7 +176,9 @@ describe('SavingsGoalsController', () => {
       };
 
       // 直接 mock findAll 方法
-      jest.spyOn(controller, 'findAll').mockResolvedValue(mockEmptyResult as any);
+      jest
+        .spyOn(controller, 'findAll')
+        .mockResolvedValue(mockEmptyResult as any);
 
       // 模拟分页查询参数
       const mockQuery = {

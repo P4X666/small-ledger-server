@@ -1680,16 +1680,6 @@
             "minimum": 0,
             "default": 0
           },
-          "period": {
-            "type": "string",
-            "description": "攒钱周期",
-            "enum": [
-              "monthly",
-              "quarterly",
-              "half_yearly",
-              "yearly"
-            ]
-          },
           "startDate": {
             "format": "date-time",
             "type": "string",
@@ -1717,7 +1707,6 @@
         "required": [
           "name",
           "targetAmount",
-          "period",
           "startDate",
           "endDate"
         ]
@@ -1740,16 +1729,6 @@
           "currentAmount": {
             "type": "number",
             "description": "当前金额"
-          },
-          "period": {
-            "type": "string",
-            "description": "攒钱周期",
-            "enum": [
-              "monthly",
-              "quarterly",
-              "half_yearly",
-              "yearly"
-            ]
           },
           "startDate": {
             "format": "date-time",
@@ -1790,7 +1769,6 @@
           "name",
           "targetAmount",
           "currentAmount",
-          "period",
           "startDate",
           "endDate",
           "status",

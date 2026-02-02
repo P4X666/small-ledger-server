@@ -27,13 +27,6 @@ export class CreateSavingsGoalDto {
   @Min(0)
   currentAmount?: number;
 
-  @ApiProperty({
-    description: '攒钱周期',
-    enum: SavingsGoalPeriod,
-  })
-  @IsEnum(SavingsGoalPeriod)
-  period: SavingsGoalPeriod;
-
   @ApiProperty({ description: '开始日期' })
   @IsDateString()
   startDate: Date;

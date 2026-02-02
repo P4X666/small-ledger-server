@@ -41,6 +41,10 @@ import { ExcelModule } from './excel/excel.module';
       charset: 'utf8mb4',
       timezone: '+08:00',
       logging: ['query', 'error'],
+      // 全局类型转换器：所有 decimal 类型字段应用转换器
+      extra: {
+        decimalNumbers: true,
+      },
     }),
     UsersModule,
     AuthModule,

@@ -144,7 +144,6 @@
 - `name`: 目标名称
 - `target_amount`: 目标金额
 - `current_amount`: 当前金额
-- `period`: 时间周期（月度、季度、半年、年度）
 - `start_date`: 开始日期
 - `end_date`: 结束日期
 - `status`: 状态（进行中、已完成、已失败）

@@ -55,14 +55,19 @@ describe('SavingsGoalsService', () => {
         endDate: new Date('2023-12-31'),
         description: 'Save for summer vacation',
         status: SavingsGoalStatus.InProgress,
-        period: SavingsGoalPeriod.Monthly,
         startDate: new Date('2023-01-01'),
       };
 
       const result = await savingsGoalsService.create(1, createDto);
 
       expect(savingsGoalsRepository.create).toHaveBeenCalledWith({
-        ...createDto,
+        description: "Save for summer vacation",
+        name: "Vacation Fund",
+        status: "in_progress",
+        target_amount: 5000,
+        current_amount: 0,
+        start_date: new Date('2023-01-01'),
+        end_date: new Date('2023-12-31'),
         user_id: 1,
       });
       expect(savingsGoalsRepository.save).toHaveBeenCalled();
