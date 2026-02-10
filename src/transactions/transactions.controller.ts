@@ -6,8 +6,11 @@ import {
   Delete,
   Body,
   Param,
+  Query,
+  BadRequestException,
   UseGuards,
 } from '@nestjs/common';
+import { validateDateRange } from '../utils/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Paginate, paginate } from 'nestjs-paginate';
 import type { PaginateQuery } from 'nestjs-paginate';
@@ -40,13 +43,38 @@ export class TransactionsController {
 
   @Get()
   @ApiOperation({ summary: '获取所有交易记录' })
+  @ApiParam({
+    name: 'startDate',
+    required: false,
+    description: '开始日期，格式：YYYY-MM-DD',
+    example: '2025-01-01',
+  })
+  @ApiParam({
+    name: 'endDate',
+    required: false,
+    description: '结束日期，格式：YYYY-MM-DD',
+    example: '2025-01-31',
+  })
   async findAll(
     @Paginate() query: PaginateQuery,
     @GetCurrentUser() user: User,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
+    // 验证日期格式和逻辑
+    try {
+      validateDateRange(startDate, endDate);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+
     return paginate(
       query,
-      this.transactionsService.getTransactionsQueryBuilder(user.id),
+      this.transactionsService.getTransactionsQueryBuilder(
+        user.id,
+        startDate,
+        endDate,
+      ),
       {
         sortableColumns: ['transaction_date', 'amount', 'category'],
         searchableColumns: ['description', 'category'],
@@ -57,6 +85,18 @@ export class TransactionsController {
 
   @Get('statistics')
   @ApiOperation({ summary: '获取交易统计' })
+  @ApiParam({
+    name: 'startDate',
+    required: false,
+    description: '开始日期，格式：YYYY-MM-DD',
+    example: '2025-01-01',
+  })
+  @ApiParam({
+    name: 'endDate',
+    required: false,
+    description: '结束日期，格式：YYYY-MM-DD',
+    example: '2025-01-31',
+  })
   @ApiResponse({
     status: 200,
     description: '获取成功',
@@ -64,8 +104,17 @@ export class TransactionsController {
   })
   async getStatistics(
     @GetCurrentUser() user: User,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ): Promise<TransactionStatisticsDto> {
-    return this.transactionsService.getStatistics(user.id);
+    // 验证日期格式和逻辑
+    try {
+      validateDateRange(startDate, endDate);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    return this.transactionsService.getStatistics(user.id, startDate, endDate);
   }
 
   @Get(':id')

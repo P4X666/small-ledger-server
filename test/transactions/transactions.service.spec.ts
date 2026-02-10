@@ -20,6 +20,12 @@ const mockRepository = jest.fn(() => ({
   find: jest.fn().mockResolvedValue([]),
   findOne: jest.fn(),
   delete: jest.fn().mockResolvedValue({ affected: 1 }),
+  createQueryBuilder: jest.fn(() => ({
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getMany: jest.fn().mockResolvedValue([]),
+  })),
 }));
 
 type MockRepository = ReturnType<typeof mockRepository>;
@@ -239,8 +245,80 @@ describe('TransactionsService', () => {
     });
   });
 
+  describe('getTransactionsQueryBuilder', () => {
+    it('should return query builder without date filters when no dates provided', () => {
+      const result = transactionsService.getTransactionsQueryBuilder(1);
+
+      expect(transactionsRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'transaction',
+      );
+      expect(result.where).toHaveBeenCalledWith(
+        'transaction.user_id = :user_id',
+        { user_id: 1 },
+      );
+      expect(result.orderBy).toHaveBeenCalledWith(
+        'transaction.transaction_date',
+        'DESC',
+      );
+    });
+
+    it('should return query builder with startDate filter when only startDate provided', () => {
+      const result = transactionsService.getTransactionsQueryBuilder(
+        1,
+        '2024-01-01',
+      );
+
+      expect(result.where).toHaveBeenCalledWith(
+        'transaction.user_id = :user_id',
+        { user_id: 1 },
+      );
+      expect(result.andWhere).toHaveBeenCalledWith(
+        'transaction.transaction_date >= :startDate',
+        { startDate: '2024-01-01' },
+      );
+    });
+
+    it('should return query builder with endDate filter when only endDate provided', () => {
+      const result = transactionsService.getTransactionsQueryBuilder(
+        1,
+        undefined,
+        '2024-01-31',
+      );
+
+      expect(result.where).toHaveBeenCalledWith(
+        'transaction.user_id = :user_id',
+        { user_id: 1 },
+      );
+      expect(result.andWhere).toHaveBeenCalledWith(
+        'transaction.transaction_date <= :endDate',
+        { endDate: '2024-01-31' },
+      );
+    });
+
+    it('should return query builder with both date filters when both dates provided', () => {
+      const result = transactionsService.getTransactionsQueryBuilder(
+        1,
+        '2024-01-01',
+        '2024-01-31',
+      );
+
+      expect(result.where).toHaveBeenCalledWith(
+        'transaction.user_id = :user_id',
+        { user_id: 1 },
+      );
+      expect(result.andWhere).toHaveBeenCalledWith(
+        'transaction.transaction_date >= :startDate',
+        { startDate: '2024-01-01' },
+      );
+      expect(result.andWhere).toHaveBeenCalledWith(
+        'transaction.transaction_date <= :endDate',
+        { endDate: '2024-01-31' },
+      );
+    });
+  });
+
   describe('getStatistics', () => {
-    it('should return correct statistics for user transactions', async () => {
+    it('should return correct statistics for user transactions without date filters', async () => {
       const mockTransactions = [
         { id: 1, user_id: 1, type: 'income', amount: 1000, category: 'salary' },
         { id: 2, user_id: 1, type: 'income', amount: 500, category: 'bonus' },
@@ -254,13 +332,26 @@ describe('TransactionsService', () => {
         },
       ];
 
-      transactionsRepository.find.mockResolvedValue(mockTransactions as any);
+      const queryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockTransactions as any),
+      };
+
+      transactionsRepository.createQueryBuilder.mockReturnValue(
+        queryBuilder as any,
+      );
 
       const result = await transactionsService.getStatistics(1);
 
-      expect(transactionsRepository.find).toHaveBeenCalledWith({
-        where: { user_id: 1 },
-      });
+      expect(transactionsRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'transaction',
+      );
+      expect(queryBuilder.where).toHaveBeenCalledWith(
+        'transaction.user_id = :user_id',
+        { user_id: 1 },
+      );
+      expect(queryBuilder.getMany).toHaveBeenCalled();
       expect(result.totalIncome).toBe(1500);
       expect(result.totalExpense).toBe(500);
       expect(result.balance).toBe(1000);
@@ -274,8 +365,126 @@ describe('TransactionsService', () => {
       });
     });
 
+    it('should return correct statistics with startDate filter', async () => {
+      const mockTransactions = [
+        { id: 1, user_id: 1, type: 'income', amount: 1000, category: 'salary' },
+      ];
+
+      const queryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockTransactions as any),
+      };
+
+      transactionsRepository.createQueryBuilder.mockReturnValue(
+        queryBuilder as any,
+      );
+
+      const result = await transactionsService.getStatistics(1, '2024-01-01');
+
+      expect(transactionsRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'transaction',
+      );
+      expect(queryBuilder.where).toHaveBeenCalledWith(
+        'transaction.user_id = :user_id',
+        { user_id: 1 },
+      );
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'transaction.transaction_date >= :startDate',
+        { startDate: '2024-01-01' },
+      );
+      expect(queryBuilder.getMany).toHaveBeenCalled();
+      expect(result.totalIncome).toBe(1000);
+    });
+
+    it('should return correct statistics with endDate filter', async () => {
+      const mockTransactions = [
+        { id: 1, user_id: 1, type: 'expense', amount: 300, category: 'food' },
+      ];
+
+      const queryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockTransactions as any),
+      };
+
+      transactionsRepository.createQueryBuilder.mockReturnValue(
+        queryBuilder as any,
+      );
+
+      const result = await transactionsService.getStatistics(
+        1,
+        undefined,
+        '2024-01-31',
+      );
+
+      expect(transactionsRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'transaction',
+      );
+      expect(queryBuilder.where).toHaveBeenCalledWith(
+        'transaction.user_id = :user_id',
+        { user_id: 1 },
+      );
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'transaction.transaction_date <= :endDate',
+        { endDate: '2024-01-31' },
+      );
+      expect(queryBuilder.getMany).toHaveBeenCalled();
+      expect(result.totalExpense).toBe(300);
+    });
+
+    it('should return correct statistics with both date filters', async () => {
+      const mockTransactions = [
+        { id: 1, user_id: 1, type: 'income', amount: 1000, category: 'salary' },
+        { id: 2, user_id: 1, type: 'expense', amount: 300, category: 'food' },
+      ];
+
+      const queryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockTransactions as any),
+      };
+
+      transactionsRepository.createQueryBuilder.mockReturnValue(
+        queryBuilder as any,
+      );
+
+      const result = await transactionsService.getStatistics(
+        1,
+        '2024-01-01',
+        '2024-01-31',
+      );
+
+      expect(transactionsRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'transaction',
+      );
+      expect(queryBuilder.where).toHaveBeenCalledWith(
+        'transaction.user_id = :user_id',
+        { user_id: 1 },
+      );
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'transaction.transaction_date >= :startDate',
+        { startDate: '2024-01-01' },
+      );
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'transaction.transaction_date <= :endDate',
+        { endDate: '2024-01-31' },
+      );
+      expect(queryBuilder.getMany).toHaveBeenCalled();
+      expect(result.totalIncome).toBe(1000);
+      expect(result.totalExpense).toBe(300);
+    });
+
     it('should return zero values for no transactions', async () => {
-      transactionsRepository.find.mockResolvedValue([]);
+      const queryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+
+      transactionsRepository.createQueryBuilder.mockReturnValue(
+        queryBuilder as any,
+      );
 
       const result = await transactionsService.getStatistics(1);
 
@@ -292,7 +501,15 @@ describe('TransactionsService', () => {
         { id: 2, user_id: 1, type: 'income', amount: 500, category: 'bonus' },
       ];
 
-      transactionsRepository.find.mockResolvedValue(mockTransactions as any);
+      const queryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockTransactions as any),
+      };
+
+      transactionsRepository.createQueryBuilder.mockReturnValue(
+        queryBuilder as any,
+      );
 
       const result = await transactionsService.getStatistics(1);
 
@@ -319,7 +536,15 @@ describe('TransactionsService', () => {
         },
       ];
 
-      transactionsRepository.find.mockResolvedValue(mockTransactions as any);
+      const queryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockTransactions as any),
+      };
+
+      transactionsRepository.createQueryBuilder.mockReturnValue(
+        queryBuilder as any,
+      );
 
       const result = await transactionsService.getStatistics(1);
 

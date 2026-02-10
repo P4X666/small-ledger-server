@@ -23,12 +23,13 @@ export class SavingsGoalsService {
     user_id: number,
     createSavingsGoalDto: CreateSavingsGoalDto,
   ): Promise<SavingsGoal> {
-    const { targetAmount, currentAmount, startDate, endDate, ...rest } = createSavingsGoalDto
+    const { targetAmount, currentAmount, startDate, endDate, ...rest } =
+      createSavingsGoalDto;
     const savingsGoal = this.savingsGoalsRepository.create({
-      ...rest, 
-      target_amount: targetAmount, 
-      current_amount: currentAmount || 0, 
-      start_date: startDate, 
+      ...rest,
+      target_amount: targetAmount,
+      current_amount: currentAmount || 0,
+      start_date: startDate,
       end_date: endDate,
       user_id,
     });

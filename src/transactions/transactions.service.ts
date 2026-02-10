@@ -49,12 +49,30 @@ export class TransactionsService {
     });
   }
 
-  // 获取用户的交易记录（支持分页）
-  getTransactionsQueryBuilder(user_id: number) {
-    return this.transactionsRepository
+  // 获取用户的交易记录（支持分页和日期范围过滤）
+  getTransactionsQueryBuilder(
+    user_id: number,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const queryBuilder = this.transactionsRepository
       .createQueryBuilder('transaction')
       .where('transaction.user_id = :user_id', { user_id })
       .orderBy('transaction.transaction_date', 'DESC');
+
+    // 添加日期范围过滤
+    if (startDate) {
+      queryBuilder.andWhere('transaction.transaction_date >= :startDate', {
+        startDate,
+      });
+    }
+    if (endDate) {
+      queryBuilder.andWhere('transaction.transaction_date <= :endDate', {
+        endDate,
+      });
+    }
+
+    return queryBuilder;
   }
 
   // 根据ID获取交易记录
@@ -97,11 +115,29 @@ export class TransactionsService {
     }
   }
 
-  // 获取交易统计
-  async getStatistics(user_id: number): Promise<TransactionStatisticsDto> {
-    const transactions = await this.transactionsRepository.find({
-      where: { user_id },
-    });
+  // 获取交易统计（支持日期范围过滤）
+  async getStatistics(
+    user_id: number,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<TransactionStatisticsDto> {
+    const queryBuilder = this.transactionsRepository
+      .createQueryBuilder('transaction')
+      .where('transaction.user_id = :user_id', { user_id });
+
+    // 添加日期范围过滤
+    if (startDate) {
+      queryBuilder.andWhere('transaction.transaction_date >= :startDate', {
+        startDate,
+      });
+    }
+    if (endDate) {
+      queryBuilder.andWhere('transaction.transaction_date <= :endDate', {
+        endDate,
+      });
+    }
+
+    const transactions = await queryBuilder.getMany();
 
     // 计算总收入和总支出 - 使用currency.js消除浮点精度问题
     const totalIncome = transactions

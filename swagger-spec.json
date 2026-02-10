@@ -670,7 +670,28 @@
       },
       "get": {
         "operationId": "TransactionsController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "path",
+            "description": "开始日期，格式：YYYY-MM-DD",
+            "schema": {
+              "example": "2025-01-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "path",
+            "description": "结束日期，格式：YYYY-MM-DD",
+            "schema": {
+              "example": "2025-01-31",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -685,7 +706,28 @@
     "/api/transactions/statistics": {
       "get": {
         "operationId": "TransactionsController_getStatistics",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "path",
+            "description": "开始日期，格式：YYYY-MM-DD",
+            "schema": {
+              "example": "2025-01-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "path",
+            "description": "结束日期，格式：YYYY-MM-DD",
+            "schema": {
+              "example": "2025-01-31",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "获取成功",
