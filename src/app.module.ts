@@ -11,6 +11,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { SavingsGoalsModule } from './savings-goals/savings-goals.module';
 import { AuthModule } from './auth/auth.module';
 import { ExcelModule } from './excel/excel.module';
+import dataSource from './config/database.config';
 
 @Module({
   imports: [
@@ -30,21 +31,8 @@ import { ExcelModule } from './excel/excel.module';
       ],
     }),
     TypeOrmModule.forRoot({
-      type: process.env.DB_TYPE as 'mysql',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '3306'),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      ...dataSource.options,
       synchronize: process.env.DB_SYNC === 'true',
-      charset: 'utf8mb4',
-      timezone: '+08:00',
-      logging: ['query', 'error'],
-      // 全局类型转换器：所有 decimal 类型字段应用转换器
-      extra: {
-        decimalNumbers: true,
-      },
     }),
     UsersModule,
     AuthModule,

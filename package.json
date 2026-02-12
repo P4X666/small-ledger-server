@@ -19,7 +19,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky",
     "swagger:generate": "ts-node src/scripts/generate-swagger.ts",
-    "swagger:validate": "ts-node src/scripts/validate-swagger.ts"
+    "swagger:validate": "ts-node src/scripts/validate-swagger.ts",
+    "backup": "mysqldump -u admin -p123456 --single-transaction --quick --hex-blob --routines --events small_ledger > small_ledger_complete.sql",
+    "backup:timestamp": "bash src/scripts/database-backup.sh",
+    "rollback": "bash src/scripts/database-rollback.sh"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
