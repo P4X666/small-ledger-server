@@ -128,7 +128,7 @@ export class CsvParser extends ExcelParser {
                   item.includes('起始日期') && item.includes('终止日期'),
               );
               if (timeRangeArr) {
-                const [t0, t1] = this.extractTimeFromBrackets(timeRangeArr[0]);
+                const [t0, t1] = this.extractTimeFromBrackets(timeRangeArr);
                 startTime = t0;
                 endTime = t1;
               }

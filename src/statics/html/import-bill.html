@@ -1,0 +1,552 @@
+<!-- 导入账单 -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导入账单</title>
+    <style>
+        /* 全局样式 */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-light: #999999;
+            --border-color: #e0e0e0;
+            --error-color: #e74c3c;
+            --success-color: #27ae60;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(46, 204, 113, 0.05) 0%, transparent 20%);
+        }
+
+        /* 容器样式 */
+        .container {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .container:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        /* 标题样式 */
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        /* 文件上传区域 */
+        .upload-area {
+            position: relative;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            margin-bottom: 32px;
+            transition: var(--transition);
+            cursor: pointer;
+            background-color: rgba(52, 152, 219, 0.02);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        #billFile {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* 已选择文件显示 */
+        .file-info {
+            margin-bottom: 32px;
+            padding: 16px;
+            background-color: rgba(46, 204, 113, 0.05);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--secondary-color);
+            text-align: left;
+            display: none;
+            position: relative;
+        }
+
+        .file-info.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            padding-right: 40px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .file-actions {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--error-color);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .delete-btn:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        /* 按钮样式 */
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background-color: var(--card-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            margin-right: 12px;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--background-color);
+            transform: translateY(-1px);
+        }
+
+        /* 进度条 */
+        .progress-container {
+            margin-bottom: 32px;
+            display: none;
+        }
+
+        .progress-container.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 消息提示 */
+        .message {
+            padding: 16px;
+            border-radius: var(--border-radius);
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message-success {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .message-error {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--error-color);
+            border-left: 4px solid var(--error-color);
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+                max-width: 100%;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .upload-area {
+                padding: 30px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>导入账单</h1>
+        <p class="subtitle">上传Excel、CSV或ZIP文件来导入您的账单数据</p>
+
+        <!-- 消息提示 -->
+        <div id="message" class="message"></div>
+
+        <!-- 文件上传区域 -->
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <p class="upload-text">点击或拖拽文件到此处上传</p>
+            <p class="upload-hint">支持 .xlsx、.xls、.csv 和 .zip 文件格式</p>
+            <input type="file" id="billFile" accept=".zip,.xlsx,.xls,.csv">
+        </div>
+
+        <!-- 已选择文件显示 -->
+        <div id="fileInfo" class="file-info">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+            <div class="file-actions">
+                <button class="delete-btn" id="deleteBtn">删除</button>
+            </div>
+        </div>
+
+        <!-- 进度条 -->
+        <div id="progressContainer" class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">上传中... 0%</div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="button-group">
+            <button id="cancelBtn" class="btn btn-secondary" style="display: none;">取消</button>
+            <button id="uploadBtn" class="btn btn-primary" disabled>上传文件</button>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const billFile = document.getElementById('billFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const message = document.getElementById('message');
+
+        // 全局变量
+        let selectedFile = null;
+        let uploadAbortController = null;
+
+        // 获取链接后缀的token
+        function getTokenFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('token');
+        }
+
+        // 显示消息
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type === 'error' ? 'message-error' : 'message-success'} show`;
+            
+            // 3秒后自动隐藏成功消息
+            if (type === 'success') {
+                setTimeout(() => {
+                    message.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // 隐藏消息
+        function hideMessage() {
+            message.classList.remove('show');
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+            else return (bytes / 1048576).toFixed(2) + ' MB';
+        }
+
+        // 处理文件选择
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                fileName.textContent = file.name;
+                fileSize.textContent = `文件大小: ${formatFileSize(file.size)}`;
+                fileInfo.classList.add('show');
+                uploadBtn.disabled = false;
+                hideMessage();
+            }
+        }
+
+        // 处理拖拽事件
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                // 直接调用文件选择处理函数
+                handleFileSelect({ target: { files: [file] } });
+            }
+        }
+
+        // 处理文件上传
+        async function handleUpload() {
+            if (!selectedFile) return;
+
+            const token = getTokenFromUrl();
+            if (!token) {
+                showMessage('错误: 缺少认证token', 'error');
+                return;
+            }
+
+            try {
+                // 显示进度条
+                progressContainer.classList.add('show');
+                uploadBtn.disabled = true;
+                cancelBtn.style.display = 'inline-block';
+
+                // 创建AbortController用于取消上传
+                uploadAbortController = new AbortController();
+
+                // 构建FormData
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                // 发送请求
+                const response = await fetch('/excel/upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    signal: uploadAbortController.signal
+                });
+
+                // 检查响应状态
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `上传失败: ${response.status}`);
+                }
+
+                const data = await response.json();
+                showMessage(data.message || '文件上传成功，正在处理中', 'success');
+                
+                // 处理完成后，清除文件选择
+                selectedFile = null;
+                fileName.textContent = '';
+                fileSize.textContent = '';
+                fileInfo.classList.remove('show');
+                uploadBtn.disabled = true;
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    showMessage(`错误: ${error.message}`, 'error');
+                }
+                uploadBtn.disabled = false;
+            } finally {
+                // 重置状态
+                progressContainer.classList.remove('show');
+                cancelBtn.style.display = 'none';
+                uploadAbortController = null;
+            }
+        }
+
+        // 取消上传
+        function handleCancel() {
+            if (uploadAbortController) {
+                uploadAbortController.abort();
+                showMessage('上传已取消', 'error');
+            }
+            
+            // 重置状态
+            progressContainer.classList.remove('show');
+            cancelBtn.style.display = 'none';
+            uploadBtn.disabled = false;
+            
+            // 清除文件选择
+            clearFileSelection();
+        }
+
+        // 清除文件选择
+        function clearFileSelection() {
+            selectedFile = null;
+            fileName.textContent = '';
+            fileSize.textContent = '';
+            fileInfo.classList.remove('show');
+            uploadBtn.disabled = true;
+            // 重置文件输入控件，以便可以重新选择同一个文件
+            billFile.value = '';
+        }
+
+        // 处理文件删除
+        function handleDelete() {
+            clearFileSelection();
+            hideMessage();
+        }
+
+        // 事件监听
+        billFile.addEventListener('change', handleFileSelect);
+        uploadBtn.addEventListener('click', handleUpload);
+        cancelBtn.addEventListener('click', handleCancel);
+        deleteBtn.addEventListener('click', handleDelete);
+        
+        // 拖拽事件
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+
+        // 初始化检查token
+        window.addEventListener('load', function() {
+            const token = getTokenFromUrl();
+            if (!token) {
+                showMessage('警告: 未检测到认证token，上传可能会失败', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
