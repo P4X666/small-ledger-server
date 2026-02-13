@@ -6,346 +6,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>导入账单</title>
-    <style>
-        /* 全局样式 */
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --background-color: #f5f7fa;
-            --card-color: #ffffff;
-            --text-primary: #333333;
-            --text-secondary: #666666;
-            --text-light: #999999;
-            --border-color: #e0e0e0;
-            --error-color: #e74c3c;
-            --success-color: #27ae60;
-            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
-            --border-radius: 8px;
-            --transition: all 0.3s ease;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(46, 204, 113, 0.05) 0%, transparent 20%);
-        }
-
-        /* 容器样式 */
-        .container {
-            background-color: var(--card-color);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-md);
-            padding: 40px;
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-            transition: var(--transition);
-        }
-
-        .container:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
-        }
-
-        /* 标题样式 */
-        h1 {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 32px;
-        }
-
-        /* 文件上传区域 */
-        .upload-area {
-            position: relative;
-            border: 2px dashed var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 40px 20px;
-            margin-bottom: 32px;
-            transition: var(--transition);
-            cursor: pointer;
-            background-color: rgba(52, 152, 219, 0.02);
-        }
-
-        .upload-area:hover {
-            border-color: var(--primary-color);
-            background-color: rgba(52, 152, 219, 0.05);
-        }
-
-        .upload-area.dragover {
-            border-color: var(--primary-color);
-            background-color: rgba(52, 152, 219, 0.1);
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            color: var(--primary-color);
-            margin-bottom: 16px;
-        }
-
-        .upload-text {
-            font-size: 16px;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        .upload-hint {
-            font-size: 12px;
-            color: var(--text-light);
-        }
-
-        #billFile {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        /* 已选择文件显示 */
-        .file-info {
-            margin-bottom: 32px;
-            padding: 16px;
-            background-color: rgba(46, 204, 113, 0.05);
-            border-radius: var(--border-radius);
-            border-left: 4px solid var(--secondary-color);
-            text-align: left;
-            display: none;
-            position: relative;
-        }
-
-        .file-info.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .file-name {
-            font-weight: 500;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-            padding-right: 40px;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .file-actions {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            color: var(--error-color);
-            cursor: pointer;
-            font-size: 14px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: var(--transition);
-        }
-
-        .delete-btn:hover {
-            background-color: rgba(231, 76, 60, 0.1);
-        }
-
-        /* 按钮样式 */
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            border: none;
-            border-radius: var(--border-radius);
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #2980b9;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-primary:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .btn-secondary {
-            background-color: var(--card-color);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            margin-right: 12px;
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--background-color);
-            transform: translateY(-1px);
-        }
-
-        /* 进度条 */
-        .progress-container {
-            margin-bottom: 32px;
-            display: none;
-        }
-
-        .progress-container.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: var(--border-color);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: var(--primary-color);
-            border-radius: 4px;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .progress-text {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        /* 消息提示 */
-        .message {
-            padding: 16px;
-            border-radius: var(--border-radius);
-            margin-bottom: 24px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .message.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .message-success {
-            background-color: rgba(39, 174, 96, 0.1);
-            color: var(--success-color);
-            border-left: 4px solid var(--success-color);
-        }
-
-        .message-error {
-            background-color: rgba(231, 76, 60, 0.1);
-            color: var(--error-color);
-            border-left: 4px solid var(--error-color);
-        }
-
-        /* 动画 */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .container {
-                padding: 30px 20px;
-                max-width: 100%;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            .upload-area {
-                padding: 30px 15px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../css/import-bill.css">
 </head>
 <body>
     <div class="container">
         <h1>导入账单</h1>
         <p class="subtitle">上传Excel、CSV或ZIP文件来导入您的账单数据</p>
 
-        <!-- 消息提示 -->
-        <div id="message" class="message"></div>
-
-        <!-- 文件上传区域 -->
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📁</div>
-            <p class="upload-text">点击或拖拽文件到此处上传</p>
-            <p class="upload-hint">支持 .xlsx、.xls、.csv 和 .zip 文件格式</p>
-            <input type="file" id="billFile" accept=".zip,.xlsx,.xls,.csv">
-        </div>
-
-        <!-- 已选择文件显示 -->
-        <div id="fileInfo" class="file-info">
-            <div class="file-name" id="fileName"></div>
-            <div class="file-size" id="fileSize"></div>
-            <div class="file-actions">
-                <button class="delete-btn" id="deleteBtn">删除</button>
+        <div class="main-content">
+            <!-- 账单获取指引卡片 -->
+            <div class="guide-container">
+                <div class="guide-card">
+                    <h2 class="guide-title">📋 账单获取指引</h2>
+                    
+                    <!-- 支付宝账单 -->
+                    <div class="guide-section">
+                        <h3 class="guide-subtitle">💳 支付宝账单</h3>
+                        <a href="https://consumeprod.alipay.com/record/standard.htm" target="_blank" class="guide-link">
+                            前往支付宝账单页面
+                        </a>
+                    </div>
+                    
+                    <!-- 微信账单 -->
+                    <div class="guide-section">
+                        <h3 class="guide-subtitle">💬 微信账单</h3>
+                        <ol class="guide-steps">
+                            <li class="guide-step">打开微信 APP</li>
+                            <li class="guide-step">点击右下角「我」</li>
+                            <li class="guide-step">选择「服务」</li>
+                            <li class="guide-step">进入「钱包」</li>
+                            <li class="guide-step">点击右上角「账单」</li>
+                            <li class="guide-step">点击右上角「常见问题」</li>
+                            <li class="guide-step">选择「下载账单」</li>
+                            <li class="guide-step">勾选「用于个人对账」</li>
+                            <li class="guide-step">点击「下载」</li>
+                        </ol>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- 进度条 -->
-        <div id="progressContainer" class="progress-container">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+            <!-- 上传模块 -->
+            <div class="upload-container">
+                <!-- 消息提示 -->
+                <div id="message" class="message"></div>
+
+                <!-- 文件上传区域 -->
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p class="upload-text">点击或拖拽文件到此处上传</p>
+                    <p class="upload-hint">支持 .xlsx 和 .zip 文件格式</p>
+                    <input type="file" id="billFile" accept=".zip,.xlsx">
+                </div>
+
+                <!-- 已选择文件显示 -->
+                <div id="fileInfo" class="file-info">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-size" id="fileSize"></div>
+                    <div class="file-actions">
+                        <button class="delete-btn" id="deleteBtn">删除</button>
+                    </div>
+                </div>
+
+                <!-- 进度条 -->
+                <div id="progressContainer" class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="button-group">
+                    <button id="cancelBtn" class="btn btn-secondary" style="display: none;">取消</button>
+                    <button id="uploadBtn" class="btn btn-primary" disabled>上传文件</button>
+                </div>
             </div>
-            <div class="progress-text" id="progressText">上传中... 0%</div>
-        </div>
-
-        <!-- 操作按钮 -->
-        <div class="button-group">
-            <button id="cancelBtn" class="btn btn-secondary" style="display: none;">取消</button>
-            <button id="uploadBtn" class="btn btn-primary" disabled>上传文件</button>
         </div>
     </div>
 
@@ -361,7 +95,6 @@
         const cancelBtn = document.getElementById('cancelBtn');
         const progressContainer = document.getElementById('progressContainer');
         const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
         const message = document.getElementById('message');
 
         // 全局变量
